@@ -1,0 +1,23 @@
+# LLM安全测试配置模板
+
+# 目标模型配置
+model:
+  # 将 8000 修改为 Ollama 的默认端口 11434
+  api_url: "http://localhost:11434/v1/chat/completions"
+  api_key: "ollama"  # Ollama 不需要 key，随便填或保持原样即可
+  model_name: "deepseek-r1:1.5b"
+  request_timeout: 60  # DeepSeek-R1 有思考过程，建议调大超时时间到 60s
+
+# 安全测试套件开关
+security_tests:
+  # 提示注入：试图通过指令覆盖系统原有设定
+  enable_prompt_injection: true
+  # 越狱攻击：试图绕过道德和安全限制
+  enable_jailbreak: true
+  # 信息泄露：试图获取训练数据或系统内部信息
+  enable_information_leakage: true
+
+# 报告输出配置
+report:
+  output_dir: "./reports"
+  format: "markdown"  # 目前支持markdown格式

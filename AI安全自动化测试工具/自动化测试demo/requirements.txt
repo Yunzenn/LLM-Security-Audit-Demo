@@ -1,0 +1,4 @@
+# LLM安全测试Demo依赖
+requests>=2.28.0
+colorama>=0.4.6  # 用于控制台彩色输出，提升交互体验
+pyyaml>=6.0      # 用于解析YAML配置文件
