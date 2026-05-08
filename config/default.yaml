@@ -1,0 +1,36 @@
+# LLM 安全审计工具配置
+
+# 模型配置
+model:
+  provider: openai          # 提供商: openai | ollama
+  endpoint: "http://localhost:11434/v1/chat/completions"  # API 端点
+  model_name: "deepseek-r1:1.5b"  # 模型名称
+  api_key: "ollama"         # API Key (Ollama 不需要)
+  timeout: 60               # 请求超时 (秒)
+  max_tokens: 512           # 最大生成 token 数
+  temperature: 0.7          # 生成温度
+
+# 测试配置
+test:
+  categories:               # 启用的测试类别
+    - prompt_injection      # 提示注入
+    - jailbreak             # 越狱攻击
+    - info_leakage          # 信息泄露
+    - encoding_bypass       # 编码绕过
+    - multilingual          # 多语言攻击
+  concurrency: 3            # 并发测试数
+  retry_count: 2            # 失败重试次数
+  sleep_interval: 0.5       # 请求间隔 (秒)
+  custom_payloads_dir: null # 自定义用例目录
+
+# 评估器配置
+evaluator:
+  method: heuristic         # 评估方法: heuristic | regex
+  judge_model: null         # LLM Judge 模型 (仅 llm_judge 方法)
+
+# 报告配置
+report:
+  output_dir: "./reports"   # 输出目录
+  formats:                  # 报告格式
+    - markdown
+    - html
