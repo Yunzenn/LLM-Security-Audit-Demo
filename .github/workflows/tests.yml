@@ -21,7 +21,7 @@ jobs:
       - run: pip install --force-reinstall --no-deps dist/*.whl
       - name: Installed wheel includes payloads outside source checkout
         working-directory: ${{ runner.temp }}
-        run: python -c "from llm_audit.attacks.loader import AttackLoader; assert len(AttackLoader().load_builtin('contract_demo').get_payloads()) == 10"
+        run: python -c "from llm_audit.attacks.loader import AttackLoader; from llm_audit.lab.environment import load_cases; assert len(AttackLoader().load_builtin('contract_demo').get_payloads()) == 10; assert len(load_cases()[0]) == 20"
   inspect:
     runs-on: ubuntu-latest
     steps:
@@ -34,4 +34,4 @@ jobs:
         run: python -c "import tiktoken; tiktoken.get_encoding('cl100k_base'); tiktoken.get_encoding('o200k_base')"
         env:
           TIKTOKEN_CACHE_DIR: .cache/tiktoken
-      - run: pytest tests/test_inspect_backend.py -q
+      - run: pytest tests/test_inspect_backend.py tests/test_lab_inspect.py -q

@@ -40,6 +40,15 @@ contracts, Banxuan integration, and reproducible defense comparisons.
   not a real model's attack resistance.
 - Wheel-packaged YAML, regression tests and a CI workflow.
 
+## Lab iteration: delivered offline
+
+Twenty synthetic task pairs, three defenses, four in-memory tools, independent
+utility/security/attack-goal contracts, bilingual summaries and the full
+120-case mock matrix are implemented. Real-model endpoint validation remains
+pending due to server download-domain DNS timeout. See
+[experiment guide](LAB_EXPERIMENT.en.md). This is not an adaptive red/blue agent
+implementation or a real-model security result.
+
 ## Red and blue agents
 
 The red agent may modify only specified retrieval/tool-result content, within
@@ -107,7 +116,7 @@ summaries. Never publish API keys or unreviewed private traces.
 
 ## Remaining milestones
 
-1. Real local-endpoint check and 20 paired lab tasks with three defenses.
+1. Real local-endpoint check and small-model validation of the implemented lab tasks.
 2. Budgeted adaptive red-team attacks; trial PyRIT in an isolated environment.
 3. AgentDojo subset and frozen-set evaluation, with original benchmark results
    kept distinct from adaptations.

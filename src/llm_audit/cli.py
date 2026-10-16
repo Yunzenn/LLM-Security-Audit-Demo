@@ -211,5 +211,115 @@ def inspect_scan(dataset: str, model: str, base_url: Optional[str], output: str)
     console.print(f"Inspect logs / 轨迹: {output}")
 
 
+@main.command("lab-eval")
+@click.option("--model", default="mockllm/lab", show_default=True)
+@click.option("--base-url", default=None)
+@click.option("--model-revision", default="unverified")
+@click.option(
+    "--defense", type=click.Choice(["all", "baseline", "prompt", "enforced"]), default="all"
+)
+@click.option("--split", type=click.Choice(["all", "dev", "holdout"]), default="dev")
+@click.option(
+    "--limit", type=click.IntRange(1, 20), default=20, help="Maximum task pairs / 任务对上限"
+)
+@click.option("--output", default="reports/lab", type=click.Path())
+def lab_eval(model, base_url, model_revision, defense, split, limit, output):
+    """Compare lab-agent defenses / 对比资料助手防御。"""
+    import platform
+    from importlib.metadata import version
+    from .lab.environment import DEFENSES, POLICY_VERSION, SCORER_VERSION, load_cases
+    from .lab.report import write_reports
+
+    try:
+        from inspect_ai import eval as inspect_eval
+        from .adapters.lab_backend import build_lab_task, scripted_lab_model
+    except ImportError as error:
+        raise click.ClickException(
+            "Install optional dependencies: pip install -e '.[inspect]'"
+        ) from error
+    destination = Path(output).resolve()
+    if destination.exists() and (not destination.is_dir() or any(destination.iterdir())):
+        raise click.ClickException(
+            "Output directory must be empty / 输出目录必须为空，避免覆盖实验"
+        )
+    cases, digest = load_cases()
+    selected = [case for case in cases if split == "all" or case.split == split][:limit]
+    defenses = DEFENSES if defense == "all" else (defense,)
+    is_mock = model == "mockllm/lab"
+    logs = inspect_eval(
+        build_lab_task(selected, defenses),
+        model=scripted_lab_model() if is_mock else model,
+        model_base_url=base_url,
+        log_dir=str(destination / "native"),
+        display="none",
+        max_samples=1,
+    )
+    rows = []
+    for log in logs:
+        for sample in log.samples or []:
+            if sample.error or not sample.scores:
+                row = dict(sample.metadata.get("lab_evidence", {}))
+                row.update(
+                    {
+                        "pair_id": sample.metadata["case"]["id"],
+                        "variant": sample.metadata["variant"],
+                        "defense": sample.metadata["defense"],
+                        "error": "Native sample error; inspect logs",
+                    }
+                )
+            else:
+                row = dict(next(iter(sample.scores.values())).metadata)
+            row["elapsed_seconds"] = sample.total_time
+            row["input_tokens"] = sum(usage.input_tokens for usage in sample.model_usage.values())
+            row["output_tokens"] = sum(usage.output_tokens for usage in sample.model_usage.values())
+            rows.append(row)
+    expected = len(selected) * 2 * len(defenses)
+    present = {(row["pair_id"], row["variant"], row["defense"]) for row in rows}
+    for case in selected:
+        for variant in ("clean", "attack"):
+            for mode in defenses:
+                if (case.id, variant, mode) not in present:
+                    rows.append(
+                        {
+                            "pair_id": case.id,
+                            "variant": variant,
+                            "defense": mode,
+                            "error": "Missing native sample; run incomplete",
+                        }
+                    )
+    manifest = {
+        "experiment": "lab-v1",
+        "execution": "scripted_mock"
+        if is_mock
+        else ("provider_mock" if model.startswith("mockllm/") else "real_model"),
+        "aggregation_version": "lab-aggregate-v2",
+        "model": model,
+        "model_revision": "scripted-v1" if is_mock else model_revision,
+        "dataset_sha256": digest,
+        "split": split,
+        "pair_count": len(selected),
+        "expected_cases": expected,
+        "defenses": list(defenses),
+        "policy_version": POLICY_VERSION,
+        "scorer_version": SCORER_VERSION,
+        "inspect_ai": version("inspect_ai"),
+        "package_version": __version__,
+        "python": platform.python_version(),
+        "sampling": {"temperature": 0, "max_tokens": 512},
+        "limits": {"messages": 32, "tokens": 8192, "seconds_per_sample": 90, "concurrency": 1},
+    }
+    paths = write_reports(rows, manifest, destination)
+    for path in paths:
+        console.print(str(path), markup=False)
+    if (
+        len(rows) != expected
+        or any(log.status != "success" or log.error for log in logs)
+        or any(row.get("error") for row in rows)
+    ):
+        raise click.ClickException(
+            "Incomplete/error run; do not report it as a successful evaluation"
+        )
+
+
 if __name__ == "__main__":
     main()
