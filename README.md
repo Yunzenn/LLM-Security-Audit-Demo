@@ -1,11 +1,12 @@
-# LLM Security Audit — 2.2
+# LLM Security Audit — 2.3
 
 [English](#english) · [中文](#中文)
 
 ## English
 
 A security regression evaluation prototype for LLM applications. This iteration
-makes outcomes explicit and adds a small optional Inspect AI integration.
+provides explicit outcomes, an optional Inspect AI integration, paired lab tasks,
+and a first real-weight Qwen3-0.6B pilot.
 It is not a security certification or a calibrated benchmark.
 
 ### What works now
@@ -41,19 +42,23 @@ for cache preparation and real endpoint settings. Inspect is optional: install
 
 ### Roadmap
 
-Reuse Inspect for execution, then add paired benign/injection lab-assistant
-scenarios, red/blue defense comparisons, a separate PyRIT adapter, and native
-AgentDojo baselines. REA is an optional later analysis/MCP target; it is not an
-integrated vulnerability scanner. These integrations remain planned.
+Inspect execution, paired lab tasks and a three-defense comparison are
+implemented. The real-weight pilot completed 120 cases with no execution
+errors, but exact utility was only 5–20% and no unauthorized attempts occurred;
+zero attack goals do not establish defense efficacy. Next: clarify task contracts
+in a new dataset version, establish clean-task competence, then add budgeted
+adaptive attacks. PyRIT, native AgentDojo baselines and REA remain planned.
 
 - [Upgrade plan](docs/UPGRADE_PLAN.en.md)
 - [Migration and scoring semantics](docs/MIGRATION.en.md)
+- [Real-model guide](docs/REAL_MODEL_GUIDE.en.md)
+- [Real pilot results and limitations](docs/experiments/qwen3-pilot-2026-10-17/RESULTS.en.md)
 - [Changes / 更新记录](CHANGELOG.md)
 
 ## 中文
 
-面向大模型应用的安全回归评测原型。本轮先让执行和判分可信，再接入可选
-Inspect AI 后端。当前版本不能提供安全认证，也不是经过校准的安全基准。
+面向大模型应用的安全回归评测原型。已实现明确判分、可选 Inspect AI 后端、配对资料助手任务，
+并完成首次 Qwen3-0.6B 真实权重试跑。当前版本不能提供安全认证，也不是经过校准的安全基准。
 
 ### 已实现
 
@@ -71,12 +76,15 @@ Inspect AI 后端。当前版本不能提供安全认证，也不是经过校准
 
 ### 后续路线
 
-以 Inspect 复用执行与日志；下一阶段加入资料助手的正常任务和注入配对样本，比较不同防御策略。
-之后才接入 PyRIT 红队策略、AgentDojo 原生基准，以及可选 REA 分析/MCP 场景。
-这些尚未实现，不能提前写成集成成果。
+已实现 Inspect 执行、资料助手配对样本和三组防御对照。真实权重完成 120 个用例且执行错误为零，
+但精确任务完成率仅 5%–20%，没有观察到越权尝试，攻击零命中不能证明防御有效。
+下一步先版本化澄清任务契约、验证正常任务能力，再加入有预算的自适应攻击。
+PyRIT 红队策略、AgentDojo 原生基准、REA 分析/MCP 场景仍待集成。
 
 - [中文升级方案](docs/UPGRADE_PLAN.zh-CN.md)
 - [中文迁移与判分说明](docs/MIGRATION.zh-CN.md)
+- [真实模型操作指南](docs/REAL_MODEL_GUIDE.zh-CN.md)
+- [真实试跑结果与限制](docs/experiments/qwen3-pilot-2026-10-17/RESULTS.zh-CN.md)
 - [Changes / 更新记录](CHANGELOG.md)
 
 ## Lab-assistant iteration / 资料助手实验

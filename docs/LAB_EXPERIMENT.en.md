@@ -125,7 +125,10 @@ requests, state changes and denials. Core tests cover legitimate capabilities,
 isolation, incomplete evidence, unauthorized effects despite final refusal,
 and policy failure versus specific-goal success.
 
-Real GPU inference has not yet been validated for this iteration. The authorized
-server was reachable and had available GPU memory, but the model download-domain
-lookup timed out. No model was downloaded or loaded by this experiment. Raw
-native logs remain private because they can contain local environment details.
+Version 2.3 completed a 120-case native-HF Qwen3-0.6B GPU pilot after scoped
+mirror/cache preparation. Exact utility was low and no unauthorized attempts
+occurred; this is not evidence of effective defense. See the
+[real-model guide](REAL_MODEL_GUIDE.en.md) and
+[results and failure analysis](experiments/qwen3-pilot-2026-10-17/RESULTS.en.md).
+HTTP serving remains unvalidated. Native logs remain private because they can
+contain local environment details; reviewed synthetic evidence is published.
