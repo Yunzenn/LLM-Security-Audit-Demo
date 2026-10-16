@@ -1,7 +1,7 @@
 """攻击模块基类"""
 
-import time
 import datetime
+import uuid
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from typing import Optional
@@ -10,6 +10,7 @@ from typing import Optional
 @dataclass
 class AttackPayload:
     """攻击载荷"""
+
     id: str
     category: str
     name: str
@@ -18,15 +19,19 @@ class AttackPayload:
     severity: str = "high"  # high | medium | low
     tags: list[str] = field(default_factory=list)
     description: str = ""
+    turns: list[str] = field(default_factory=list)
+    system_prompt: str = ""
+    forbidden_output: list[str] = field(default_factory=list)
 
 
 def _generate_test_id() -> str:
-    return f"TEST-{int(time.time() * 1000)}"[-8:]
+    return f"TEST-{uuid.uuid4().hex}"
 
 
 @dataclass
 class TestResult:
     """测试结果"""
+
     test_id: str = field(default_factory=_generate_test_id)
     timestamp: str = field(default_factory=lambda: datetime.datetime.now().isoformat())
     payload: AttackPayload = None
@@ -35,6 +40,8 @@ class TestResult:
     error: Optional[str] = None
     latency_ms: float = 0.0
     evaluation: dict = field(default_factory=dict)
+    messages: list[dict[str, str]] = field(default_factory=list)
+    attempts: int = 1
 
     def to_dict(self) -> dict:
         return {
@@ -49,6 +56,8 @@ class TestResult:
             "error": self.error,
             "latency_ms": self.latency_ms,
             "evaluation": self.evaluation,
+            "messages": self.messages,
+            "attempts": self.attempts,
         }
 
 

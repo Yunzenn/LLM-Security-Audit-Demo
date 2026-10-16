@@ -28,7 +28,10 @@ class OpenAIClient(BaseLLMClient):
         if system_prompt:
             messages.append({"role": "system", "content": system_prompt})
         messages.append({"role": "user", "content": prompt})
+        return await self.chat(messages)
 
+    async def chat(self, messages: list[dict[str, str]]) -> LLMResponse:
+        """Send the full isolated conversation to a Chat Completions endpoint."""
         payload = {
             "model": self.config.model_name,
             "messages": messages,
@@ -45,7 +48,9 @@ class OpenAIClient(BaseLLMClient):
             latency = (time.monotonic() - start_time) * 1000
 
             if "choices" in data and len(data["choices"]) > 0:
-                content = data["choices"][0]["message"]["content"]
+                content = data["choices"][0]["message"].get("content")
+                if not isinstance(content, str):
+                    return LLMResponse(success=False, error="Expected textual message content")
                 return LLMResponse(success=True, content=content.strip(), latency_ms=latency)
             else:
                 return LLMResponse(success=False, error=f"响应格式异常: {data}")

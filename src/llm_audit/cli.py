@@ -10,7 +10,7 @@ from rich.console import Console
 from rich.panel import Panel
 
 from . import __version__
-from .config import load_config, save_config, AuditConfig, DEFAULT_CONFIG
+from .config import load_config, save_config, DEFAULT_CONFIG
 from .engine import AuditEngine
 from .attacks.loader import AttackLoader
 
@@ -36,11 +36,16 @@ def main():
 @click.option("--categories", default=None, help="测试类别 (逗号分隔)")
 @click.option("--model", default=None, help="模型名称")
 @click.option("--endpoint", default=None, help="API 端点")
-@click.option("--evaluator", default=None, type=click.Choice(["heuristic", "regex"]), help="评估方法")
+@click.option(
+    "--evaluator", default=None, type=click.Choice(["heuristic", "regex"]), help="评估方法"
+)
 @click.option("--output", "-o", default=None, help="输出目录")
 @click.option("--format", "formats", default=None, help="报告格式 (逗号分隔: markdown,html)")
 @click.option("--concurrency", default=None, type=int, help="并发数")
-@click.option("--quick", is_flag=True, help="快速扫描 (仅高危用例)")
+@click.option("--quick", is_flag=True, help="快速扫描 (提示注入和越狱类别)")
+@click.option(
+    "--lang", default=None, type=click.Choice(["zh", "en"]), help="报告语言 / report language"
+)
 def scan(
     config_path: Optional[str],
     categories: Optional[str],
@@ -51,12 +56,15 @@ def scan(
     formats: Optional[str],
     concurrency: Optional[int],
     quick: bool,
+    lang: Optional[str],
 ):
     """执行安全审计扫描"""
     console.print(BANNER)
 
     # 加载配置
     config = load_config(config_path)
+    if lang:
+        config.report.language = lang
 
     # 命令行参数覆盖配置
     if model:
@@ -67,7 +75,9 @@ def scan(
         config.evaluator.method = evaluator
     if output:
         config.report.output_dir = output
-    if concurrency:
+    if concurrency is not None:
+        if not 1 <= concurrency <= 64:
+            raise click.BadParameter("concurrency must be between 1 and 64")
         config.test.concurrency = concurrency
     if formats:
         config.report.formats = [f.strip() for f in formats.split(",")]
@@ -80,22 +90,24 @@ def scan(
         test_categories = ["prompt_injection", "jailbreak"]
 
     # 显示配置
-    console.print(Panel(
-        f"[bold]模型:[/bold] {config.model.model_name}\n"
-        f"[bold]端点:[/bold] {config.model.endpoint}\n"
-        f"[bold]评估:[/bold] {config.evaluator.method}\n"
-        f"[bold]类别:[/bold] {', '.join(test_categories or config.test.categories)}\n"
-        f"[bold]输出:[/bold] {config.report.output_dir}",
-        title="扫描配置",
-        border_style="cyan",
-    ))
+    console.print(
+        Panel(
+            f"[bold]模型:[/bold] {config.model.model_name}\n"
+            f"[bold]端点:[/bold] {config.model.endpoint}\n"
+            f"[bold]评估:[/bold] {config.evaluator.method}\n"
+            f"[bold]类别:[/bold] {', '.join(test_categories or config.test.categories)}\n"
+            f"[bold]输出:[/bold] {config.report.output_dir}",
+            title="扫描配置",
+            border_style="cyan",
+        )
+    )
 
     # 执行扫描
     async def run_scan():
         engine = AuditEngine(config)
         try:
             if not await engine.initialize():
-                return
+                raise click.ClickException("Model initialization failed / 模型初始化失败")
             await engine.run(test_categories)
             engine.print_summary()
             engine.generate_reports()
@@ -151,7 +163,7 @@ def init(output: str):
     console.print(f"[green]✓ 配置文件已生成: {output}[/green]")
     console.print("\n使用方法:")
     console.print(f"  1. 编辑 {output} 配置模型信息")
-    console.print(f"  2. 运行 llm-audit scan 开始扫描")
+    console.print("  2. 运行 llm-audit scan 开始扫描")
 
 
 @main.command()
@@ -169,6 +181,34 @@ def migrate(old_config_path: str):
         console.print("[green]✓ 配置迁移完成: config.yaml[/green]")
     except Exception as e:
         console.print(f"[red]迁移失败: {e}[/red]")
+
+
+@main.command("inspect-scan")
+@click.option("--dataset", required=True, type=click.Path(exists=True, dir_okay=False))
+@click.option("--model", required=True, help="Inspect model identifier, e.g. mockllm/model")
+@click.option("--base-url", default=None, help="Optional provider API root / API 根地址")
+@click.option("--output", default="reports/inspect", type=click.Path())
+def inspect_scan(dataset: str, model: str, base_url: Optional[str], output: str):
+    """Run the optional Inspect pilot / 运行可选 Inspect 试点。"""
+    try:
+        from inspect_ai import eval as inspect_eval
+        from .adapters.inspect_backend import build_task
+    except ImportError as error:
+        raise click.ClickException(
+            "Install the optional extra: pip install -e '.[inspect]'"
+        ) from error
+    payloads = AttackLoader().load_from_yaml(Path(dataset)).get_payloads()
+    if not payloads:
+        raise click.ClickException("Dataset is empty / 数据集为空")
+    logs = inspect_eval(
+        build_task(payloads), model=model, model_base_url=base_url, log_dir=output, display="none"
+    )
+    if not logs or any(
+        log.status != "success" or log.error or any(sample.error for sample in log.samples or [])
+        for log in logs
+    ):
+        raise click.ClickException("Inspect evaluation contains errors; inspect the native logs")
+    console.print(f"Inspect logs / 轨迹: {output}")
 
 
 if __name__ == "__main__":

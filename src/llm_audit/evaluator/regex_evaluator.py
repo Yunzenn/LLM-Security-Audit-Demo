@@ -13,6 +13,7 @@ from .base import BaseEvaluator, EvalResult
 @dataclass
 class EvalRule:
     """评估规则"""
+
     id: str
     name: str
     pattern: str

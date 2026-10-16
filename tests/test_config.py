@@ -1,9 +1,6 @@
 """配置管理测试"""
 
-import pytest
-import tempfile
 import yaml
-from pathlib import Path
 
 from llm_audit.config import AuditConfig, load_config, migrate_old_config
 

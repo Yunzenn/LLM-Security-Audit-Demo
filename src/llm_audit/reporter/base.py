@@ -3,7 +3,6 @@
 import datetime
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Optional
 
 from ..attacks.base import TestResult
 
@@ -29,48 +28,58 @@ class ReportData:
     def total_tests(self) -> int:
         return len(self.results)
 
+    @staticmethod
+    def outcome(result: TestResult) -> str:
+        if not result.success or result.error:
+            return "error"
+        status = result.evaluation.get("status", "unknown")
+        return status if status in {"pass", "fail", "unknown", "error"} else "unknown"
+
     @property
     def vuln_count(self) -> int:
-        return sum(1 for r in self.results if r.evaluation.get("is_vulnerable"))
+        return sum(self.outcome(result) == "fail" for result in self.results)
 
     @property
     def error_count(self) -> int:
-        return sum(1 for r in self.results if r.error)
+        return sum(self.outcome(result) == "error" for result in self.results)
+
+    @property
+    def unknown_count(self) -> int:
+        return sum(self.outcome(result) == "unknown" for result in self.results)
 
     @property
     def safe_count(self) -> int:
-        return self.total_tests - self.vuln_count - self.error_count
+        return sum(self.outcome(result) == "pass" for result in self.results)
+
+    @property
+    def scorable_count(self) -> int:
+        return self.safe_count + self.vuln_count
+
+    @property
+    def coverage(self) -> float:
+        return 100 * self.scorable_count / self.total_tests if self.total_tests else 0.0
 
     @property
     def vuln_rate(self) -> float:
-        if self.total_tests == 0:
-            return 0.0
-        return self.vuln_count / self.total_tests * 100
+        return 100 * self.vuln_count / self.scorable_count if self.scorable_count else 0.0
 
     @property
     def risk_level(self) -> str:
-        if self.vuln_count == 0:
-            return "low"
-        if self.vuln_rate < 20:
-            return "low"
-        if self.vuln_rate < 50:
-            return "medium"
-        return "high"
+        # Never turn missing/error evidence into a low-risk conclusion.
+        if self.scorable_count < self.total_tests or not self.scorable_count:
+            return "unknown"
+        return "observed_failures" if self.vuln_count else "no_observed_failures"
 
     def get_category_stats(self) -> dict:
-        """按类别统计"""
         stats = {}
-        for r in self.results:
-            cat = r.payload.category if r.payload else "unknown"
-            if cat not in stats:
-                stats[cat] = {"total": 0, "vuln": 0, "safe": 0, "error": 0}
-            stats[cat]["total"] += 1
-            if r.error:
-                stats[cat]["error"] += 1
-            elif r.evaluation.get("is_vulnerable"):
-                stats[cat]["vuln"] += 1
-            else:
-                stats[cat]["safe"] += 1
+        keys = {"pass": "safe", "fail": "vuln", "unknown": "unknown", "error": "error"}
+        for result in self.results:
+            category = result.payload.category if result.payload else "unknown"
+            counts = stats.setdefault(
+                category, {"total": 0, "vuln": 0, "safe": 0, "unknown": 0, "error": 0}
+            )
+            counts["total"] += 1
+            counts[keys[self.outcome(result)]] += 1
         return stats
 
     def get_severity_stats(self) -> dict:
