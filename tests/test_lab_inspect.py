@@ -9,9 +9,7 @@ from llm_audit.lab.environment import load_cases
 from llm_audit.lab.report import summarize
 
 
-def test_paired_matrix_executes_tools_and_enforces_policy(tmp_path, monkeypatch):
-    monkeypatch.setenv("WIN_PD_OVERRIDE_LOCAL_APPDATA", str(tmp_path))
-    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path))
+def test_paired_matrix_executes_tools_and_enforces_policy(tmp_path, monkeypatch, inspect_runtime):
     monkeypatch.setenv("TIKTOKEN_CACHE_DIR", str(Path(__file__).parents[1] / ".cache/tiktoken"))
     cases, _ = load_cases()
     logs = inspect_eval(
@@ -129,12 +127,12 @@ def test_native_error_retains_known_goal_and_usage(tmp_path, monkeypatch):
     assert group["unauthorized_executed"] == 1
 
 
-def test_inspect_preserves_partial_evidence_after_provider_failure(tmp_path, monkeypatch):
+def test_inspect_preserves_partial_evidence_after_provider_failure(
+    tmp_path, monkeypatch, inspect_runtime
+):
     from inspect_ai.dataset import MemoryDataset
     from inspect_ai.model import ModelOutput, get_model
 
-    monkeypatch.setenv("WIN_PD_OVERRIDE_LOCAL_APPDATA", str(tmp_path))
-    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path))
     monkeypatch.setenv("TIKTOKEN_CACHE_DIR", str(Path(__file__).parents[1] / ".cache/tiktoken"))
     cases, _ = load_cases()
     task = build_lab_task([cases[0]], ("baseline",))
@@ -160,3 +158,50 @@ def test_inspect_preserves_partial_evidence_after_provider_failure(tmp_path, mon
     evidence = sample.metadata["lab_evidence"]
     assert evidence["objective_status"] == "fail" and evidence["unauthorized_executed"]
     assert evidence["model_calls"] == 1
+
+
+def test_cli_records_selected_pairs_and_applied_provider_options(tmp_path, monkeypatch):
+    import json
+    from types import SimpleNamespace
+    import inspect_ai
+    import inspect_ai.model
+    from click.testing import CliRunner
+    from llm_audit.cli import main
+
+    captured = {}
+
+    def model(name, base_url=None, **kwargs):
+        captured["options"] = kwargs
+        return "fixture"
+
+    def evaluate(task, **kwargs):
+        captured["extra_body"] = task.config.extra_body
+        captured["samples"] = list(task.dataset)
+        return [SimpleNamespace(status="success", error=None, samples=[])]
+
+    monkeypatch.setattr(inspect_ai.model, "get_model", model)
+    monkeypatch.setattr(inspect_ai, "eval", evaluate)
+    result = CliRunner().invoke(
+        main,
+        [
+            "lab-eval",
+            "--model",
+            "hf/fixture",
+            "--hf-options",
+            '{"enable_thinking":false,"do_sample":false}',
+            "--chat-template-kwargs",
+            '{"enable_thinking":false}',
+            "--pairs",
+            "lab_11,lab_01",
+            "--limit",
+            "2",
+            "--output",
+            str(tmp_path),
+        ],
+    )
+    assert result.exit_code != 0  # Synthetic missing samples still cause failure.
+    assert captured["options"] == {"enable_thinking": False, "do_sample": False}
+    assert captured["extra_body"] == {"chat_template_kwargs": {"enable_thinking": False}}
+    report = json.loads((tmp_path / "lab_results.json").read_text(encoding="utf-8"))
+    assert report["manifest"]["pair_ids"] == ["lab_11", "lab_01"]
+    assert len(report["manifest"]["source_sha256"]) == 64

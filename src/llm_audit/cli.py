@@ -219,19 +219,78 @@ def inspect_scan(dataset: str, model: str, base_url: Optional[str], output: str)
     "--defense", type=click.Choice(["all", "baseline", "prompt", "enforced"]), default="all"
 )
 @click.option("--split", type=click.Choice(["all", "dev", "holdout"]), default="dev")
+@click.option("--pairs", default=None, help="Explicit comma-separated pair IDs / 指定任务对编号")
+@click.option("--hf-options", default=None, help="Native HF settings JSON / 原生 HF 设置")
+@click.option(
+    "--chat-template-kwargs", default=None, help="Provider template JSON / 提供商模板参数"
+)
 @click.option(
     "--limit", type=click.IntRange(1, 20), default=20, help="Maximum task pairs / 任务对上限"
 )
 @click.option("--output", default="reports/lab", type=click.Path())
-def lab_eval(model, base_url, model_revision, defense, split, limit, output):
+def lab_eval(
+    model,
+    base_url,
+    model_revision,
+    defense,
+    split,
+    pairs,
+    chat_template_kwargs,
+    hf_options,
+    limit,
+    output,
+):
     """Compare lab-agent defenses / 对比资料助手防御。"""
     import platform
+    import json
     from importlib.metadata import version
     from .lab.environment import DEFENSES, POLICY_VERSION, SCORER_VERSION, load_cases
     from .lab.report import write_reports
+    from .lab.provenance import select_cases, source_fingerprint
+
+    initialization = {}
+    if hf_options is not None:
+        try:
+            initialization = json.loads(hf_options)
+            allowed = {"enable_thinking", "do_sample", "device", "torch_dtype"}
+            if (
+                not model.startswith("hf/")
+                or not isinstance(initialization, dict)
+                or not set(initialization) <= allowed
+            ):
+                raise ValueError("Invalid HF options")
+            for key in ("enable_thinking", "do_sample"):
+                if key in initialization and not isinstance(initialization[key], bool):
+                    raise ValueError("Expected boolean")
+            if "device" in initialization and not isinstance(initialization["device"], str):
+                raise ValueError("Expected device string")
+            if "torch_dtype" in initialization and initialization["torch_dtype"] not in {
+                "bfloat16",
+                "float16",
+                "float32",
+                "auto",
+            }:
+                raise ValueError("Invalid dtype")
+        except (ValueError, TypeError):
+            raise click.BadParameter(
+                "Expected native hf/ options: enable_thinking, do_sample, device, torch_dtype",
+                param_hint="--hf-options",
+            ) from None
+
+    template_options = None
+    if chat_template_kwargs is not None:
+        try:
+            template_options = json.loads(chat_template_kwargs)
+            if not isinstance(template_options, dict):
+                raise ValueError("Expected JSON object")
+        except ValueError:
+            raise click.BadParameter(
+                "Expected a JSON object", param_hint="--chat-template-kwargs"
+            ) from None
 
     try:
         from inspect_ai import eval as inspect_eval
+        from inspect_ai.model import get_model
         from .adapters.lab_backend import build_lab_task, scripted_lab_model
     except ImportError as error:
         raise click.ClickException(
@@ -243,12 +302,25 @@ def lab_eval(model, base_url, model_revision, defense, split, limit, output):
             "Output directory must be empty / 输出目录必须为空，避免覆盖实验"
         )
     cases, digest = load_cases()
-    selected = [case for case in cases if split == "all" or case.split == split][:limit]
+    try:
+        selected = select_cases(cases, split, pairs, limit)
+    except ValueError as error:
+        raise click.BadParameter(str(error), param_hint="--pairs/--split/--limit") from None
     defenses = DEFENSES if defense == "all" else (defense,)
     is_mock = model == "mockllm/lab"
+    selected_model = (
+        scripted_lab_model()
+        if is_mock
+        else (get_model(model, base_url=base_url, **initialization) if initialization else model)
+    )
     logs = inspect_eval(
-        build_lab_task(selected, defenses),
-        model=scripted_lab_model() if is_mock else model,
+        build_lab_task(
+            selected,
+            defenses,
+            chat_template_kwargs=template_options,
+            provider=model.split("/", 1)[0],
+        ),
+        model=selected_model,
         model_base_url=base_url,
         log_dir=str(destination / "native"),
         display="none",
@@ -293,9 +365,15 @@ def lab_eval(model, base_url, model_revision, defense, split, limit, output):
         if is_mock
         else ("provider_mock" if model.startswith("mockllm/") else "real_model"),
         "aggregation_version": "lab-aggregate-v2",
+        "completion_version": "response-evidence-v2",
         "model": model,
         "model_revision": "scripted-v1" if is_mock else model_revision,
         "dataset_sha256": digest,
+        "source_sha256": source_fingerprint(),
+        "source_hash_scheme": "relative-path-and-lf-python-v1",
+        "pair_ids": [case.id for case in selected],
+        "chat_template_kwargs": template_options,
+        "hf_options": initialization,
         "split": split,
         "pair_count": len(selected),
         "expected_cases": expected,
