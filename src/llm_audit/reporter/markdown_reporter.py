@@ -1,147 +1,109 @@
-"""Markdown 报告生成器"""
+"""Bilingual, evidence-scoped Markdown reports."""
 
-import datetime
+import html
 from pathlib import Path
-
 from .base import BaseReporter, ReportData
+
+LABELS = {
+    "en": [
+        "LLM security evaluation",
+        "Metric",
+        "Value",
+        "Total",
+        "Passed objective",
+        "Failed objective",
+        "Unknown",
+        "Execution errors",
+        "Scorable coverage",
+        "Failure rate (scorable only)",
+        "Results",
+        "ID",
+        "Category",
+        "Outcome",
+        "Reason",
+        "No general safety conclusion. Rule matches are advisory, not verified vulnerabilities.",
+        "N/A: no scorable cases",
+    ],
+    "zh": [
+        "LLM 安全评测",
+        "指标",
+        "数值",
+        "总数",
+        "目标通过",
+        "目标失败",
+        "无法判定",
+        "执行错误",
+        "有效判分覆盖率",
+        "失败率（仅有效判分）",
+        "结果",
+        "编号",
+        "类别",
+        "判定",
+        "依据",
+        "不作整体安全性结论。关键词命中是辅助信号，不是已确认漏洞。",
+        "不适用：没有可判分用例",
+    ],
+}
+
+
+def cell(value: object) -> str:
+    return html.escape(str(value)).replace("|", "&#124;").replace("\n", "<br>")
 
 
 class MarkdownReporter(BaseReporter):
-    """生成 Markdown 格式的安全审计报告"""
-
-    DISCLAIMER = """
-> **安全声明**
-> 1. 本报告由自动化工具生成，所有结果必须由安全专家人工复核。
-> 2. 测试用例仅用于安全研究，请勿用于非法目的。
-> 3. 报告中可能包含模型生成的敏感内容，请妥善处理。
-"""
-
     def generate(self, data: ReportData, output_path: Path) -> Path:
-        """生成 Markdown 报告"""
-        report_path = output_path / f"Security_Report_{data.timestamp_str}.md"
-
-        content = self._render(data)
-        report_path.write_text(content, encoding="utf-8")
-        return report_path
+        language = data.config.get("report", {}).get("language", "zh")
+        path = output_path / f"Security_Report_{data.timestamp_str}.{language}.md"
+        path.write_text(self._render(data), encoding="utf-8")
+        return path
 
     def _render(self, data: ReportData) -> str:
-        """渲染报告内容"""
-        risk_emoji = {"low": "✅", "medium": "⚠️", "high": "❌"}.get(data.risk_level, "❓")
-        category_stats = data.get_category_stats()
-        severity_stats = data.get_severity_stats()
-
-        lines = [
-            "# LLM 安全审计报告",
-            "",
-            f"**生成时间:** {data.timestamp.strftime('%Y-%m-%d %H:%M:%S')}",
-            f"**目标模型:** {data.model_name}",
-            f"**API 端点:** {data.model_endpoint}",
-            "",
-            "---",
-            "",
-            self.DISCLAIMER,
-            "---",
-            "",
-            "## 1. 测试概览",
-            "",
-            "| 指标 | 数值 |",
-            "|------|------|",
-            f"| 总测试用例 | {data.total_tests} |",
-            f"| 潜在漏洞 | **{data.vuln_count}** |",
-            f"| 安全通过 | {data.safe_count} |",
-            f"| 请求错误 | {data.error_count} |",
-            f"| 漏洞率 | {data.vuln_rate:.1f}% |",
-            f"| 风险等级 | {risk_emoji} **{data.risk_level.upper()}** |",
-            "",
-            "## 2. 分类统计",
-            "",
-            "| 类别 | 总数 | 漏洞 | 安全 | 错误 |",
-            "|------|------|------|------|------|",
+        labels = LABELS[data.config.get("report", {}).get("language", "zh")]
+        rate = f"{data.vuln_rate:.1f}%" if data.scorable_count else labels[16]
+        values = [
+            data.total_tests,
+            data.safe_count,
+            data.vuln_count,
+            data.unknown_count,
+            data.error_count,
+            f"{data.coverage:.1f}%",
+            rate,
         ]
-
-        for cat, stats in category_stats.items():
-            lines.append(f"| {cat} | {stats['total']} | {stats['vuln']} | {stats['safe']} | {stats['error']} |")
-
-        lines.extend([
+        lines = [
+            f"# {labels[0]}",
             "",
-            "## 3. 严重性分布",
+            f"Model: {cell(data.model_name)}",
             "",
-            "| 严重性 | 数量 |",
-            "|--------|------|",
-        ])
-        for sev, count in severity_stats.items():
-            if count > 0:
-                emoji = {"safe": "🟢", "low": "🔵", "medium": "🟡", "high": "🟠", "critical": "🔴"}.get(sev, "⚪")
-                lines.append(f"| {emoji} {sev} | {count} |")
-
-        lines.extend([
+            labels[15],
             "",
-            "## 4. 详细测试结果",
-            "",
-            "| ID | 类别 | 测试名称 | 风险 | 置信度 | 标记 |",
-            "|----|------|----------|------|--------|------|",
-        ])
-
-        for r in data.results:
-            if r.payload:
-                sev = r.evaluation.get("severity", "unknown")
-                sev_icon = {"safe": "🟢", "low": "🔵", "medium": "🟡", "high": "🟠", "critical": "🔴"}.get(sev, "⚪")
-                confidence = r.evaluation.get("confidence", 0)
-                flags = ", ".join(r.evaluation.get("flags", [])[:3])
-                if len(r.evaluation.get("flags", [])) > 3:
-                    flags += "..."
-                lines.append(
-                    f"| {r.test_id} | {r.payload.category} | {r.payload.name} | "
-                    f"{sev_icon} {sev} | {confidence:.0%} | {flags} |"
+            f"| {labels[1]} | {labels[2]} |",
+            "| --- | --- |",
+        ]
+        lines.extend(f"| {label} | {value} |" for label, value in zip(labels[3:10], values))
+        lines.extend(
+            [
+                "",
+                f"## {labels[10]}",
+                "",
+                "| " + " | ".join(labels[11:15]) + " |",
+                "| --- | --- | --- | --- |",
+            ]
+        )
+        for result in data.results:
+            lines.append(
+                "| "
+                + " | ".join(
+                    cell(value)
+                    for value in [
+                        result.payload.id if result.payload else result.test_id,
+                        result.payload.category if result.payload else "unknown",
+                        data.outcome(result),
+                        result.error or result.evaluation.get("reason", ""),
+                    ]
                 )
-
-        lines.extend([
-            "",
-            "## 5. 漏洞详情",
-            "",
-        ])
-
-        vuln_results = [r for r in data.results if r.evaluation.get("is_vulnerable")]
-        if vuln_results:
-            for i, r in enumerate(vuln_results, 1):
-                if r.payload:
-                    lines.extend([
-                        f"### 5.{i} {r.payload.name}",
-                        "",
-                        f"- **类别:** {r.payload.category}",
-                        f"- **严重性:** {r.evaluation.get('severity', 'unknown')}",
-                        f"- **测试提示:** `{r.payload.prompt[:100]}...`" if len(r.payload.prompt) > 100 else f"- **测试提示:** `{r.payload.prompt}`",
-                        f"- **模型回复摘要:** {r.response[:200]}..." if len(r.response) > 200 else f"- **模型回复摘要:** {r.response}",
-                        f"- **评估原因:** {r.evaluation.get('reason', 'N/A')}",
-                        "",
-                    ])
-        else:
-            lines.append("未发现明显漏洞。")
-
-        lines.extend([
-            "",
-            "## 6. 加固建议",
-            "",
-            "### 6.1 提示注入防护",
-            "- 使用分隔符技术将系统指令与用户输入隔离",
-            "- 实施输入过滤，检测常见注入关键词",
-            "- 采用多层防御策略，不依赖单一防护",
-            "",
-            "### 6.2 越狱攻击防护",
-            "- 在输出层增加内容安全审核",
-            "- 强化系统提示词中的安全约束",
-            "- 定期更新防护策略以应对新型攻击",
-            "",
-            "### 6.3 信息泄露防护",
-            "- 禁止模型输出与自身配置相关的元数据",
-            "- 对敏感训练数据进行脱敏处理",
-            "- 实施输出过滤，防止系统信息泄露",
-            "",
-            "---",
-            f"*Generated by LLM Security Audit Tool v2.0 at {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*",
-        ])
-
-        return "\n".join(lines)
+                + " |"
+            )
+        return "\n".join(lines) + "\n"
 
     def get_file_extension(self) -> str:
         return ".md"

@@ -1,7 +1,6 @@
 """配置管理模块"""
 
 import os
-from pathlib import Path
 from typing import Optional
 
 import yaml
@@ -10,8 +9,11 @@ from pydantic import BaseModel, Field
 
 class ModelConfig(BaseModel):
     """模型连接配置"""
+
     provider: str = Field(default="openai", description="提供商: openai | ollama")
-    endpoint: str = Field(default="http://localhost:11434/v1/chat/completions", description="API 端点")
+    endpoint: str = Field(
+        default="http://localhost:11434/v1/chat/completions", description="API 端点"
+    )
     model_name: str = Field(default="deepseek-r1:1.5b", description="模型名称")
     api_key: str = Field(default="ollama", description="API Key")
     timeout: int = Field(default=60, description="请求超时(秒)")
@@ -21,30 +23,38 @@ class ModelConfig(BaseModel):
 
 class TestConfig(BaseModel):
     """测试配置"""
+
     categories: list[str] = Field(
-        default=["prompt_injection", "jailbreak", "info_leakage"],
-        description="启用的测试类别"
+        default=["prompt_injection", "jailbreak", "info_leakage"], description="启用的测试类别"
     )
-    concurrency: int = Field(default=3, description="并发测试数")
-    retry_count: int = Field(default=2, description="失败重试次数")
-    sleep_interval: float = Field(default=0.5, description="请求间隔(秒)")
+    concurrency: int = Field(default=3, ge=1, le=64, description="并发测试数")
+    retry_count: int = Field(default=2, ge=0, le=10, description="失败重试次数")
+    sleep_interval: float = Field(default=0.5, ge=0, description="每个 worker 的用例冷却间隔(秒)")
     custom_payloads_dir: Optional[str] = Field(default=None, description="自定义用例目录")
 
 
 class EvaluatorConfig(BaseModel):
     """评估器配置"""
+
     method: str = Field(default="heuristic", description="评估方法: heuristic | regex | llm_judge")
-    judge_model: Optional[str] = Field(default=None, description="LLM Judge 模型 (仅 llm_judge 方法)")
+    judge_model: Optional[str] = Field(
+        default=None, description="LLM Judge 模型 (仅 llm_judge 方法)"
+    )
 
 
 class ReportConfig(BaseModel):
     """报告配置"""
+
     output_dir: str = Field(default="./reports", description="输出目录")
     formats: list[str] = Field(default=["markdown", "html"], description="报告格式")
+    language: str = Field(
+        default="zh", pattern="^(zh|en)$", description="报告语言 / report language"
+    )
 
 
 class AuditConfig(BaseModel):
     """主配置"""
+
     model: ModelConfig = Field(default_factory=ModelConfig)
     test: TestConfig = Field(default_factory=TestConfig)
     evaluator: EvaluatorConfig = Field(default_factory=EvaluatorConfig)
@@ -69,17 +79,17 @@ def load_config(config_path: Optional[str] = None) -> AuditConfig:
                 break
 
     if config_path is None or not os.path.exists(config_path):
-        return DEFAULT_CONFIG
+        return DEFAULT_CONFIG.model_copy(deep=True)
 
     try:
         with open(config_path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
         if data is None:
-            return DEFAULT_CONFIG
+            return DEFAULT_CONFIG.model_copy(deep=True)
         return AuditConfig(**data)
-    except Exception as e:
-        print(f"[!] 配置文件解析失败，使用默认配置: {e}")
-        return DEFAULT_CONFIG
+    except (OSError, ValueError, TypeError, yaml.YAMLError):
+        # Validation errors can embed secrets from the original config.
+        raise ValueError("Invalid configuration / 配置无效，请检查文件和参数范围") from None
 
 
 def save_config(config: AuditConfig, config_path: str = "config.yaml"):

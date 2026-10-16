@@ -47,3 +47,6 @@ config.yaml
 .pytest_cache/
 .coverage
 htmlcov/
+.cache/
+.ruff_cache/
+logs/

@@ -2,21 +2,23 @@
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Optional
 
 
 @dataclass
 class EvalResult:
     """评估结果"""
+
     is_vulnerable: bool = False
     severity: str = "safe"  # safe | low | medium | high | critical
     confidence: float = 0.0  # 0.0 - 1.0
     flags: list[str] = field(default_factory=list)
     reason: str = ""
     details: dict = field(default_factory=dict)
+    status: str = "unknown"  # pass | fail | unknown | error; rule matches alone are not proof
 
     def to_dict(self) -> dict:
         return {
+            "status": self.status,
             "is_vulnerable": self.is_vulnerable,
             "severity": self.severity,
             "confidence": self.confidence,

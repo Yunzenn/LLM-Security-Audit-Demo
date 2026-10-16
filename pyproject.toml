@@ -4,13 +4,13 @@ build-backend = "hatchling.build"
 
 [project]
 name = "llm-security-audit"
-version = "2.0.0"
+version = "2.1.0"
 description = "LLM 安全审计工具 - 自动化测试大语言模型的安全边界"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 authors = [
-    { name = "AI Security Researcher" },
+    { name = "Yunzenn" },
 ]
 keywords = ["llm", "security", "audit", "ai-safety", "red-team"]
 classifiers = [
@@ -35,6 +35,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+inspect = ["inspect-ai==0.3.281; python_version >= '3.10'"]
 full = [
     "matplotlib>=3.7.0",
     "plotly>=5.0.0",
@@ -48,14 +49,24 @@ dev = [
 llm-audit = "llm_audit.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/your-username/llm-security-audit"
-Documentation = "https://github.com/your-username/llm-security-audit#readme"
-Repository = "https://github.com/your-username/llm-security-audit"
-Issues = "https://github.com/your-username/llm-security-audit/issues"
+Homepage = "https://github.com/Yunzenn/LLM-Security-Audit-Demo"
+Documentation = "https://github.com/Yunzenn/LLM-Security-Audit-Demo#readme"
+Repository = "https://github.com/Yunzenn/LLM-Security-Audit-Demo"
+Issues = "https://github.com/Yunzenn/LLM-Security-Audit-Demo/issues"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/llm_audit"]
 
+[tool.hatch.build.targets.wheel.force-include]
+"attack_payloads" = "llm_audit/data/attack_payloads"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]

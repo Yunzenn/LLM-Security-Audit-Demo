@@ -1,7 +1,5 @@
 """攻击用例加载器 - 从 YAML 文件加载用例"""
 
-import importlib
-import importlib.util
 from pathlib import Path
 from typing import Optional
 
@@ -34,6 +32,8 @@ class AttackLoader:
     def __init__(self, payloads_dir: Optional[str] = None):
         # 内置用例目录
         self._builtin_dir = Path(__file__).parent.parent.parent.parent / "attack_payloads"
+        if not self._builtin_dir.exists():
+            self._builtin_dir = Path(__file__).parent.parent / "data" / "attack_payloads"
         # 自定义用例目录
         self._custom_dir = Path(payloads_dir) if payloads_dir else None
 
@@ -48,15 +48,31 @@ class AttackLoader:
 
         for i, item in enumerate(data.get("payloads", [])):
             payload = AttackPayload(
-                id=item.get("id", f"{category}_{i+1:03d}"),
+                id=item.get("id", f"{category}_{i + 1:03d}"),
                 category=category,
-                name=item.get("name", f"Test {i+1}"),
-                prompt=item["prompt"],
+                name=item.get("name", f"Test {i + 1}"),
+                prompt=item.get("prompt", ""),
                 expected_behavior=item.get("expected_behavior", "refuse"),
                 severity=item.get("severity", "high"),
                 tags=item.get("tags", []),
                 description=item.get("description", ""),
+                turns=item.get("turns", []),
+                system_prompt=item.get("system_prompt", ""),
+                forbidden_output=item.get("forbidden_output", []),
             )
+            if not payload.prompt and not payload.turns:
+                raise ValueError(f"{payload.id}: prompt or turns is required")
+            if not isinstance(payload.prompt, str) or not isinstance(payload.system_prompt, str):
+                raise ValueError(f"{payload.id}: prompt and system_prompt must be strings")
+            if not isinstance(payload.turns, list) or any(
+                not isinstance(turn, str) or not turn.strip() for turn in payload.turns
+            ):
+                raise ValueError(f"{payload.id}: turns must contain nonempty user messages")
+            if not isinstance(payload.forbidden_output, list) or any(
+                not isinstance(value, str) or not value.strip()
+                for value in payload.forbidden_output
+            ):
+                raise ValueError(f"{payload.id}: forbidden_output must contain nonempty strings")
             payloads.append(payload)
 
         return YamlAttack(category, name, payloads)
@@ -117,9 +133,11 @@ class AttackLoader:
         for category in self._get_available_categories():
             attack = self.load_builtin(category) or self.load_custom(category)
             if attack:
-                result.append({
-                    "category": category,
-                    "name": attack.get_name(),
-                    "payload_count": len(attack.get_payloads()),
-                })
+                result.append(
+                    {
+                        "category": category,
+                        "name": attack.get_name(),
+                        "payload_count": len(attack.get_payloads()),
+                    }
+                )
         return result

@@ -1,0 +1,37 @@
+name: Tests
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  core:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ['3.10', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install -e '.[dev]' ruff
+      - run: ruff check src tests
+      - run: pytest -q
+      - run: pip install build
+      - run: python -m build --wheel
+      - run: pip install --force-reinstall --no-deps dist/*.whl
+      - name: Installed wheel includes payloads outside source checkout
+        working-directory: ${{ runner.temp }}
+        run: python -c "from llm_audit.attacks.loader import AttackLoader; assert len(AttackLoader().load_builtin('contract_demo').get_payloads()) == 10"
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -e '.[dev,inspect]'
+      - name: Prepare public tokenizer data
+        run: python -c "import tiktoken; tiktoken.get_encoding('cl100k_base'); tiktoken.get_encoding('o200k_base')"
+        env:
+          TIKTOKEN_CACHE_DIR: .cache/tiktoken
+      - run: pytest tests/test_inspect_backend.py -q
