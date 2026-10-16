@@ -2,7 +2,7 @@
 
 2026-10-16, Windows, Python 3.12.14, Inspect AI 0.3.281.
 
-- Local full suite: **57 tests passed**. 本地完整测试 57 项通过。
+- Local full suite: **60 tests passed**. 本地完整测试 60 项通过。
 - Full matrix: 20 pairs × 2 variants × 3 defenses = **120 samples**, **393 mock
   generations**, no execution errors. 完整矩阵 120 用例、393 次模拟生成，无执行错误。
 - Every clean group completed 20/20 tasks, with no unauthorized calls or blocks.
@@ -15,8 +15,8 @@
 - These are expected scripted behaviors, **not measured real-model defense
   efficacy**. 这些是脚本预设行为，不是真实模型的防御效果成绩。
 - Upstream Inspect emits a known retry deprecation warning per generation;
-  the full suite emitted 409 warnings of this one type. 上游重试实现每次生成发出同类
-  弃用提示，完整测试共 409 条；不影响本轮执行结果。
+  the full suite emitted 411 warnings of this one type. 上游重试实现每次生成发出同类
+  弃用提示，完整测试共 411 条；不影响本轮执行结果。
 
 [English example report](examples/lab_mock.en.md) · [中文示例](examples/lab_mock.zh.md)
 
@@ -29,3 +29,6 @@ out. No model was downloaded or loaded. This records the incomplete step rather
 than claiming the full real-agent milestone is complete.
 真实模型试跑未完成：服务器有空闲 GPU 和已有推理环境，但下载域名解析超时；没有下载或加载
 模型。本记录明确保留未完成步骤，不宣称真实 Agent 实验阶段已全部完成。
+
+Pre-merge review reproduced and fixed mock-provider mislabeling and loss of partial goal/usage evidence after native errors. Three added regressions include a native Inspect provider-failure run.
+合并前复现并修复了模拟提供商误标真实推理、报错后丢失部分攻击证据及用量的问题；新增三项回归，包含 Inspect 原生提供商失败场景。

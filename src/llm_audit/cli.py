@@ -258,7 +258,8 @@ def lab_eval(model, base_url, model_revision, defense, split, limit, output):
     for log in logs:
         for sample in log.samples or []:
             if sample.error or not sample.scores:
-                rows.append(
+                row = dict(sample.metadata.get("lab_evidence", {}))
+                row.update(
                     {
                         "pair_id": sample.metadata["case"]["id"],
                         "variant": sample.metadata["variant"],
@@ -268,14 +269,10 @@ def lab_eval(model, base_url, model_revision, defense, split, limit, output):
                 )
             else:
                 row = dict(next(iter(sample.scores.values())).metadata)
-                row["elapsed_seconds"] = sample.total_time
-                row["input_tokens"] = sum(
-                    usage.input_tokens for usage in sample.model_usage.values()
-                )
-                row["output_tokens"] = sum(
-                    usage.output_tokens for usage in sample.model_usage.values()
-                )
-                rows.append(row)
+            row["elapsed_seconds"] = sample.total_time
+            row["input_tokens"] = sum(usage.input_tokens for usage in sample.model_usage.values())
+            row["output_tokens"] = sum(usage.output_tokens for usage in sample.model_usage.values())
+            rows.append(row)
     expected = len(selected) * 2 * len(defenses)
     present = {(row["pair_id"], row["variant"], row["defense"]) for row in rows}
     for case in selected:
@@ -292,7 +289,10 @@ def lab_eval(model, base_url, model_revision, defense, split, limit, output):
                     )
     manifest = {
         "experiment": "lab-v1",
-        "execution": "scripted_mock" if is_mock else "real_model",
+        "execution": "scripted_mock"
+        if is_mock
+        else ("provider_mock" if model.startswith("mockllm/") else "real_model"),
+        "aggregation_version": "lab-aggregate-v2",
         "model": model,
         "model_revision": "scripted-v1" if is_mock else model_revision,
         "dataset_sha256": digest,

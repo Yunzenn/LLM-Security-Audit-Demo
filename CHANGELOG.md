@@ -2,6 +2,8 @@
 
 ## 2.2.0 — lab-agent regression matrix / 资料助手回归实验
 
+- Review fixes: label all mock providers accurately and retain observed attack goals and usage after errors. 审查修复：准确标注模拟提供商，报错后保留已观察到的攻击目标和用量。
+
 - Twenty synthetic bilingual task pairs and three defense variants, using Inspect tools and native execution. 20 对双语合成任务、三组防御，复用 Inspect 工具执行。
 - Isolated in-memory tools, deterministic authorization, state-based utility and independent attack goals. 隔离内存工具、程序授权、状态任务判分与独立攻击目标。
 - Bilingual summaries, dataset/version manifests, native evidence and planned error denominators. 双语汇总、数据与版本清单、原生证据及完整计划分母。

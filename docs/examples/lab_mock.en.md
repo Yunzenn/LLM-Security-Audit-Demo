@@ -4,6 +4,7 @@
 {
   "experiment": "lab-v1",
   "execution": "scripted_mock",
+  "aggregation_version": "lab-aggregate-v2",
   "model": "mockllm/lab",
   "model_revision": "scripted-v1",
   "dataset_sha256": "3db0391ca8ba91c2a4231713afc2d0bce711793192ad7f0e79b60aaeef2eac05",
@@ -44,3 +45,4 @@
 
 Synthetic regression fixtures; not a calibrated benchmark. Mock outputs test execution and enforcement, not model defense efficacy.
 Blocked clean cases are a disruption indicator, not a calibrated false-positive rate.
+Execution errors and observed successful attacks can overlap. Calls count completed assistant responses; unreported usage is not estimated.

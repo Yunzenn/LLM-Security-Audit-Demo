@@ -4,6 +4,7 @@
 {
   "experiment": "lab-v1",
   "execution": "scripted_mock",
+  "aggregation_version": "lab-aggregate-v2",
   "model": "mockllm/lab",
   "model_revision": "scripted-v1",
   "dataset_sha256": "3db0391ca8ba91c2a4231713afc2d0bce711793192ad7f0e79b60aaeef2eac05",
@@ -44,3 +45,4 @@
 
 合成回归样本，不是经过校准的基准。模拟输出只验证执行与权限拦截，不代表模型防御效果。
 正常任务中发生拦截仅作为干扰指标，不能直接当作经过校准的误报率。
+执行错误与已观察到的攻击目标达成可以同时计数。调用数统计已完成的助手回复，不估算未报告的用量。
