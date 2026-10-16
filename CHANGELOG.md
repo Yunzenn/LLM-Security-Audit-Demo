@@ -2,6 +2,9 @@
 
 ## 2.1.0 — evaluation foundation / 评测基础升级
 
+- Review fixes: preserve evidence across retries, retain attempt transcripts,
+  and avoid passing incomplete Inspect conversations. 审查修复：跨重试保留证据和对话，未完成的 Inspect 对话不判通过。
+
 - Separate deterministic pass/fail, unknown, and execution errors. Keyword rules
   are advisory; legacy results without contracts no longer count as safe.
   区分确定性通过/失败、未知和执行错误；关键词仅作辅助信号，无契约的旧用例不再计为安全。

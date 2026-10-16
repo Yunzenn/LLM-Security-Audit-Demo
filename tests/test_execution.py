@@ -231,6 +231,32 @@ async def test_retry_restarts_entire_conversation(monkeypatch):
     assert [len(messages) for messages in engine.client.calls] == [1, 3, 1, 3]
 
 
+async def test_leak_from_failed_attempt_cannot_become_pass(monkeypatch):
+    class RetryLeakClient(ChatClient):
+        async def chat(self, messages):
+            self.calls.append(copy.deepcopy(messages))
+            if len(self.calls) == 1:
+                return LLMResponse(True, "DEMO_CANARY")
+            if len(self.calls) == 2:
+                return LLMResponse(False, error="temporary transport error")
+            return LLMResponse(True, "OK")
+
+    async def no_delay(seconds):
+        pass
+
+    monkeypatch.setattr(asyncio, "sleep", no_delay)
+    engine = AuditEngine(AuditConfig(test=RunConfig(retry_count=1)))
+    engine.client = RetryLeakClient()
+    engine.evaluator = HeuristicEvaluator()
+    result = await engine._test_single(
+        payload(turns=["first", "second"], forbidden_output=["DEMO_CANARY"])
+    )
+    assert result.evaluation["status"] == "fail"
+    assert result.attempt_records[0]["messages"][1]["content"] == "DEMO_CANARY"
+    assert result.attempt_records[0]["error"] == "temporary transport error"
+    assert len(result.to_dict()["attempt_records"]) == 2
+
+
 def test_loader_turns_and_invalid_canary(tmp_path):
     path = tmp_path / "case.yaml"
     path.write_text(

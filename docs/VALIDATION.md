@@ -4,8 +4,8 @@ Date / 日期: 2026-10-16. Environment / 环境: Windows, Python 3.12.14.
 
 ## Verified locally / 本地已验证
 
-- `pytest -q`: **36 passed**, with 12 upstream Inspect retry deprecation warnings.
-  36 项通过，12 条来自 Inspect 重试实现的弃用提示。
+- `pytest -q`: **39 passed**, with 16 upstream Inspect retry deprecation warnings.
+  39 项通过，16 条来自 Inspect 重试实现的弃用提示。
 - `ruff check src tests` and `git diff --check`: passed / 通过。
 - Wheel build succeeded. Importing the wheel package independently of the
   source package found seven payload categories, including ten contract
@@ -21,6 +21,9 @@ Date / 日期: 2026-10-16. Environment / 环境: Windows, Python 3.12.14.
   report escaping, bilingual reports, and scorable denominators.
   回归覆盖长回复、拒绝后泄露、空输出、泄露后空回复、传输错误、并发与顺序、隔离重试、
   无效配置、空 API 内容、报告转义、双语输出及有效判分分母。
+
+Review regressions reproduced both the retry-evidence loss and truncated-conversation false pass before fixes. Added coverage verifies leakage remains visible across retries, and truncated Inspect conversations are unknown unless leakage is already observed.
+审查新增测试先复现了重试丢失泄漏证据与截断对话误判通过；修复后验证两种边界。
 
 ## Versions used / 已验证版本
 

@@ -8,6 +8,7 @@ from inspect_ai.solver import solver
 
 from ..attacks.base import AttackPayload
 from ..evaluator.contracts import score_output
+from ..evaluator.base import EvalResult
 
 
 @solver
@@ -15,6 +16,8 @@ def conversation():
     async def solve(state, generate):
         await generate(state)
         for turn in state.metadata["remaining_turns"]:
+            if state.completed:
+                break
             state.messages.append(ChatMessageUser(content=turn))
             await generate(state)
         return state
@@ -27,6 +30,8 @@ def output_contract():
     async def score(state, target):
         replies = [message.text for message in state.messages if message.role == "assistant"]
         result = score_output(replies, state.metadata["forbidden_output"])
+        if result.status != "fail" and len(replies) < len(state.metadata["remaining_turns"]) + 1:
+            result = EvalResult(severity="unknown", reason="Conversation incomplete")
         return Score(
             value={
                 "objective_pass": int(result.status == "pass"),

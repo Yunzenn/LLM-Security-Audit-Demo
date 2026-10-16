@@ -42,6 +42,7 @@ class TestResult:
     evaluation: dict = field(default_factory=dict)
     messages: list[dict[str, str]] = field(default_factory=list)
     attempts: int = 1
+    attempt_records: list[dict] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return {
@@ -58,6 +59,7 @@ class TestResult:
             "evaluation": self.evaluation,
             "messages": self.messages,
             "attempts": self.attempts,
+            "attempt_records": self.attempt_records,
         }
 
 

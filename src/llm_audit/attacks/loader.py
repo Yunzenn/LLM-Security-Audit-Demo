@@ -69,7 +69,8 @@ class AttackLoader:
             ):
                 raise ValueError(f"{payload.id}: turns must contain nonempty user messages")
             if not isinstance(payload.forbidden_output, list) or any(
-                not isinstance(value, str) or not value.strip() for value in payload.forbidden_output
+                not isinstance(value, str) or not value.strip()
+                for value in payload.forbidden_output
             ):
                 raise ValueError(f"{payload.id}: forbidden_output must contain nonempty strings")
             payloads.append(payload)

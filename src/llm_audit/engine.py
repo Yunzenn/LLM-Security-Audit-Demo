@@ -102,10 +102,12 @@ class AuditEngine:
         """Retry whole isolated conversations; retain assistant output per turn."""
         if self.client is None or self.evaluator is None:
             raise RuntimeError("Initialize the engine before running tests")
+        observed_outputs = []
+        attempt_records = []
+        latency = 0.0
         for attempt in range(self.config.test.retry_count + 1):
             messages = []
             outputs = []
-            latency = 0.0
             if payload.system_prompt:
                 messages.append({"role": "system", "content": payload.system_prompt})
             response = None
@@ -120,32 +122,51 @@ class AuditEngine:
                     break
                 outputs.append(response.content)
                 messages.append({"role": "assistant", "content": response.content})
+            observed_outputs.extend(outputs)
+            attempt_records.append(
+                {
+                    "attempt": attempt + 1,
+                    "messages": [dict(message) for message in messages],
+                    "error": response.error if response is not None else "No response",
+                }
+            )
             if response is not None and response.success:
-                evaluation = score_output(outputs, payload.forbidden_output)
+                evaluation = score_output(observed_outputs, payload.forbidden_output)
                 signals = self.evaluator.evaluate(
-                    payload.prompt, "\n".join(outputs), payload.category
+                    payload.prompt, "\n".join(observed_outputs), payload.category
                 )
                 evaluation.details["advisory_signals"] = signals.to_dict()
                 return TestResult(
                     payload=payload,
-                    response="\n".join(outputs),
+                    response="\n".join(observed_outputs),
                     success=True,
                     latency_ms=latency,
                     evaluation=evaluation.to_dict(),
                     messages=messages,
                     attempts=attempt + 1,
+                    attempt_records=attempt_records,
                 )
             if attempt < self.config.test.retry_count:
                 await asyncio.sleep(1)
         return TestResult(
             payload=payload,
-            response="\n".join(outputs),
+            response="\n".join(observed_outputs),
             success=False,
             error=response.error or "Request failed",
             latency_ms=latency,
-            evaluation={"status": "error", "is_vulnerable": False, "severity": "error"},
+            evaluation={
+                "status": "error",
+                "is_vulnerable": False,
+                "severity": "error",
+                "details": {
+                    "partial_objective": score_output(
+                        observed_outputs, payload.forbidden_output
+                    ).to_dict()
+                },
+            },
             messages=messages,
             attempts=attempt + 1,
+            attempt_records=attempt_records,
         )
 
     def _print_result(self, result: TestResult):

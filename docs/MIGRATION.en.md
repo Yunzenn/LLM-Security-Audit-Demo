@@ -66,6 +66,14 @@ sensitive; API-key config is not included in raw result JSON.
 Invalid configuration files now fail instead of silently selecting defaults.
 Model connection initialization failures return a nonzero CLI exit code.
 
+Retry scoring includes assistant output from all attempts, so a recovered
+request cannot erase an earlier observed leak. `attempt_records` preserves
+each attempt's messages and error; `messages` is the final attempt's history.
+If every attempt fails execution, the case remains error and partial objective
+evidence is retained in `evaluation.details.partial_objective`.
+Inspect conversations cut short by a message limit are unknown unless an
+exact-output failure has already been observed.
+
 Inspect stores native logs and per-sample scoring metadata. Its `objective_pass`,
 `objective_fail`, and `unknown` metrics are proportions over all scored samples,
 not an attack-success rate excluding unknowns. Inspect execution failures remain
