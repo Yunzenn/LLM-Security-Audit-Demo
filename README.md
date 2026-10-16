@@ -1,4 +1,4 @@
-# LLM Security Audit — 2.1
+# LLM Security Audit — 2.2
 
 [English](#english) · [中文](#中文)
 
@@ -78,6 +78,19 @@ Inspect AI 后端。当前版本不能提供安全认证，也不是经过校准
 - [中文升级方案](docs/UPGRADE_PLAN.zh-CN.md)
 - [中文迁移与判分说明](docs/MIGRATION.zh-CN.md)
 - [Changes / 更新记录](CHANGELOG.md)
+
+## Lab-assistant iteration / 资料助手实验
+
+```bash
+# 20 pairs × 2 variants × 3 defenses = 120 simulated cases
+llm-audit lab-eval --split all --output reports/lab-v1
+```
+
+The default is a deliberately policy-blind scripted mock, with no paid API.
+It verifies in-memory tool effects and enforcement, not model defense efficacy.
+默认使用故意忽略防御提示的模拟模型，不调用付费 API；验证的是内存工具状态与权限拦截。
+
+[English guide](docs/LAB_EXPERIMENT.en.md) · [中文说明](docs/LAB_EXPERIMENT.zh-CN.md)
 
 ## License / 许可
 

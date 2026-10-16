@@ -1,5 +1,12 @@
 # Changelog / 更新记录
 
+## 2.2.0 — lab-agent regression matrix / 资料助手回归实验
+
+- Twenty synthetic bilingual task pairs and three defense variants, using Inspect tools and native execution. 20 对双语合成任务、三组防御，复用 Inspect 工具执行。
+- Isolated in-memory tools, deterministic authorization, state-based utility and independent attack goals. 隔离内存工具、程序授权、状态任务判分与独立攻击目标。
+- Bilingual summaries, dataset/version manifests, native evidence and planned error denominators. 双语汇总、数据与版本清单、原生证据及完整计划分母。
+- Complete 120-case mock integration matrix. Real-model validation remains pending; no autonomous red/blue agent is claimed. 完整 120 用例模拟测试；真实模型仍待验证，尚不宣称自主红蓝队。
+
 ## 2.1.0 — evaluation foundation / 评测基础升级
 
 - Review fixes: preserve evidence across retries, retain attempt transcripts,
