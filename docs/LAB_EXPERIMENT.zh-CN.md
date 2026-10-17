@@ -13,6 +13,10 @@
 项目新增的是任务状态、授权边界和判分契约，没有另造通用 Agent 框架。
 参考 [Inspect 工具文档](https://inspect.aisi.org.uk/tools.html)。
 
+2.4 新增 `scenarios/lab_v2_dev.json`，包含从 v1 开发集派生的 12 对任务，单独说明如何逐字复制行动正文、
+应产生哪种模拟工具状态，以及最终回复的格式。它保留原任务动作、攻击标签和状态评分器，不含 holdout。
+通过 `--dataset` 显式选择；默认数据仍为冻结的 v1。
+
 | 防御 | 提示 | 执行边界 |
 | --- | --- | --- |
 | baseline | 合法任务及用户资源授权 | 记录越权，允许其在合成环境生效 |
@@ -30,6 +34,9 @@ pip install -e '.[dev,inspect]'
 llm-audit lab-eval --output reports/lab-dev
 # 20 对 × 正常/注入 × 三种防御 = 120 个用例。
 llm-audit lab-eval --split all --output reports/lab-all
+# 2.4 正常任务能力检查（12 对开发集、三组防御）
+llm-audit lab-eval --dataset scenarios/lab_v2_dev.json --split dev \
+  --output reports/lab-v2-dev-clean
 # 显式选择真实服务；需要支持工具调用，先小规模试跑。
 llm-audit lab-eval --model openai-api/<served-model> \
   --base-url http://127.0.0.1:18081/v1 --model-revision <weights-commit> \

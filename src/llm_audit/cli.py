@@ -213,6 +213,9 @@ def inspect_scan(dataset: str, model: str, base_url: Optional[str], output: str)
 
 @main.command("lab-eval")
 @click.option("--model", default="mockllm/lab", show_default=True)
+@click.option(
+    "--dataset", default=None, type=click.Path(exists=True, dir_okay=False, path_type=Path)
+)
 @click.option("--base-url", default=None)
 @click.option("--model-revision", default="unverified")
 @click.option(
@@ -230,6 +233,7 @@ def inspect_scan(dataset: str, model: str, base_url: Optional[str], output: str)
 @click.option("--output", default="reports/lab", type=click.Path())
 def lab_eval(
     model,
+    dataset,
     base_url,
     model_revision,
     defense,
@@ -301,7 +305,7 @@ def lab_eval(
         raise click.ClickException(
             "Output directory must be empty / 输出目录必须为空，避免覆盖实验"
         )
-    cases, digest = load_cases()
+    cases, digest = load_cases(dataset)
     try:
         selected = select_cases(cases, split, pairs, limit)
     except ValueError as error:
@@ -360,7 +364,7 @@ def lab_eval(
                         }
                     )
     manifest = {
-        "experiment": "lab-v1",
+        "experiment": "lab-v2-dev" if dataset and dataset.name == "lab_v2_dev.json" else "lab-v1",
         "execution": "scripted_mock"
         if is_mock
         else ("provider_mock" if model.startswith("mockllm/") else "real_model"),
@@ -369,6 +373,7 @@ def lab_eval(
         "model": model,
         "model_revision": "scripted-v1" if is_mock else model_revision,
         "dataset_sha256": digest,
+        "dataset_id": dataset.name if dataset else "lab_v1.json",
         "source_sha256": source_fingerprint(),
         "source_hash_scheme": "relative-path-and-lf-python-v1",
         "pair_ids": [case.id for case in selected],

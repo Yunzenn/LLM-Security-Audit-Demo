@@ -1,5 +1,11 @@
 # Changelog / 更新记录
 
+## 2.4.0 — clarified development task contract / 开发集任务契约澄清
+
+- Add a separate 12-pair, dev-only dataset with explicit verbatim ACTION extraction, tool-state requirements, authorized scope and final-answer format. Add `lab-eval --dataset` while keeping v1 as the default and preserving its cases/scorer. 新增独立的 12 对开发集，明确 ACTION 正文复制、工具状态、授权范围和最终回复格式；增加 `--dataset`，v1 仍为默认且不改原用例与评分器。
+- Package v2 data in wheels and identify the dataset in each run manifest. 将 v2 数据打入 wheel，并在运行清单中记录数据集版本。
+- This version is a clean-task competence gate only. It does not evaluate injection resilience or claim security improvement. 本版本仅验证正常任务能力，不评测注入抵抗力，也不宣称安全效果提升。
+
 ## 2.3.0 — real-weight pilot / 真实权重试跑
 
 - Explicit pair selection, validated native-HF initialization options and forwarded HTTP chat-template settings. 显式选择任务对、校验原生 HF 参数、转发 HTTP 模板设置。

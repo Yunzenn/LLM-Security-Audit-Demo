@@ -21,7 +21,7 @@ jobs:
       - run: pip install --force-reinstall --no-deps dist/*.whl
       - name: Installed wheel includes payloads outside source checkout
         working-directory: ${{ runner.temp }}
-        run: python -c "from llm_audit.attacks.loader import AttackLoader; from llm_audit.lab.environment import load_cases; assert len(AttackLoader().load_builtin('contract_demo').get_payloads()) == 10; assert len(load_cases()[0]) == 20"
+        run: python -c "from importlib.resources import files; from llm_audit.attacks.loader import AttackLoader; from llm_audit.lab.environment import load_cases; assert len(AttackLoader().load_builtin('contract_demo').get_payloads()) == 10; assert len(load_cases()[0]) == 20; assert len(load_cases(files('llm_audit') / 'data/lab_v2_dev.json')[0]) == 12"
   inspect:
     runs-on: ubuntu-latest
     steps:
