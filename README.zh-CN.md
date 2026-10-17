@@ -74,7 +74,7 @@ llm-audit lab-eval --split all --output reports/lab-all
 
 已实现：YAML 提示攻击扫描、确定性输出契约、可选 Inspect 执行、配对资料助手合成任务、首次真实权重推理链路、版本化任务契约数据及 clean/attack 显式筛选。
 
-下一步：只依据开发集失败样例诊断并修订任务契约，再进行明确标注的 clean-only 诊断复跑；不得用 holdout 调参。正常任务效用达到门槛前，不进入自适应红队。AgentDojo、复用 PyRIT 攻击策略及聚焦的 REA/MCP 分析仍属后续阶段。
+v3 诊断运行符合 36 个 clean 样本的协议，但三种防御均为 0/12。对于 Qwen3-0.6B，在相同任务上继续改措辞已无依据；详见 [v3 结果](docs/experiments/lab-v3-dev-2026-10-17/RESULTS.zh-CN.md)。下一步应另选更强模型，仅在开发集任务上评估；不得用 holdout 调参。正常任务效用达到门槛前，不进入自适应红队。AgentDojo、复用 PyRIT 攻击策略及聚焦的 REA/MCP 分析仍属后续阶段。
 
 完整路线见[中英文升级计划](docs/UPGRADE_PLAN.zh-CN.md)。[迁移与评分说明](docs/MIGRATION.zh-CN.md)介绍未知结果和精确契约的处理方式。
 

@@ -38,12 +38,57 @@ def test_paired_matrix_executes_tools_and_enforces_policy(tmp_path, monkeypatch,
     assert all(row["events"] for row in rows)
 
 
-def test_task_matrix_can_select_only_clean_variant():
-    cases, _ = load_cases()
-    task = build_lab_task(cases[:2], defenses=("baseline", "prompt"), variants=("clean",))
-    assert len(task.dataset) == 4
+def test_v3_matrix_contains_only_36_clean_samples():
+    dataset = Path(__file__).parents[1] / "scenarios/lab_v3_dev.json"
+    cases, _ = load_cases(dataset)
+    task = build_lab_task(cases, variants=("clean",))
+    assert len(task.dataset) == 36
     assert {sample.metadata["variant"] for sample in task.dataset} == {"clean"}
-    assert {sample.metadata["defense"] for sample in task.dataset} == {"baseline", "prompt"}
+    assert {sample.metadata["defense"] for sample in task.dataset} == {
+        "baseline",
+        "prompt",
+        "enforced",
+    }
+
+
+def test_v3_cli_manifest_records_clean_only_matrix_and_dataset_id(tmp_path, monkeypatch):
+    import json
+    from types import SimpleNamespace
+
+    import inspect_ai
+    from click.testing import CliRunner
+    from llm_audit.cli import main
+
+    monkeypatch.setattr(
+        inspect_ai,
+        "eval",
+        lambda *args, **kwargs: [SimpleNamespace(status="success", error=None, samples=[])],
+    )
+    dataset = Path(__file__).parents[1] / "scenarios/lab_v3_dev.json"
+    destination = tmp_path / "v3-clean"
+    result = CliRunner().invoke(
+        main,
+        [
+            "lab-eval",
+            "--dataset",
+            str(dataset),
+            "--variant",
+            "clean",
+            "--split",
+            "dev",
+            "--model",
+            "mockllm/lab",
+            "--output",
+            str(destination),
+        ],
+    )
+    assert result.exit_code != 0
+    report = json.loads((destination / "lab_results.json").read_text(encoding="utf-8"))
+    assert report["manifest"]["experiment"] == "lab-v3-dev"
+    assert report["manifest"]["dataset_id"] == "lab_v3_dev.json"
+    assert report["manifest"]["expected_cases"] == 36
+    assert report["manifest"]["variants"] == ["clean"]
+    assert len(report["cases"]) == 36
 
 
 def test_cli_missing_samples_preserve_planned_denominators(tmp_path, monkeypatch):

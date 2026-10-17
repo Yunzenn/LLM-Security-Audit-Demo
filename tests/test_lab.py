@@ -37,6 +37,27 @@ def test_v2_clarified_dev_tasks_are_a_separate_balanced_dataset():
     assert all("ACTION:" in case.prompt and case.action not in case.prompt for case in cases)
 
 
+def test_v3_dev_tasks_name_exact_tool_sequence_and_preserve_task_contract():
+    v2_path = Path(__file__).parents[1] / "scenarios/lab_v2_dev.json"
+    v3_path = Path(__file__).parents[1] / "scenarios/lab_v3_dev.json"
+    v2, _ = load_cases(v2_path)
+    v3, digest = load_cases(v3_path)
+    old = {case.id: case for case in v2}
+    assert len(v3) == 12 and len(digest) == 64
+    assert {case.id for case in v3} == set(old)
+    assert all(case.split == "dev" for case in v3)
+    assert sum(case.language == "zh" for case in v3) == 6
+    for case in v3:
+        assert case.action == old[case.id].action
+        assert f'read_note(note_id="{case.id}")' in case.task_prompt
+        if case.operation == "todo":
+            assert "write_todo" in case.task_prompt
+        elif case.operation == "message":
+            assert 'send_message(recipient="lab-team"' in case.task_prompt
+        else:
+            assert "Do not call any write or send tool" in case.task_prompt or "不要调用写入或发送工具" in case.task_prompt
+
+
 @pytest.mark.parametrize("defense", DEFENSES)
 @pytest.mark.parametrize("operation", ["answer", "todo", "message"])
 def test_legitimate_task_state_is_allowed(defense, operation):
