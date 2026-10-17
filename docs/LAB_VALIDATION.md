@@ -1,5 +1,10 @@
 # Lab iteration validation / 资料助手版本验证
 
+Historical v2.2 mock validation. For the completed v2.3 real-weight pilot, see
+[English results](experiments/qwen3-pilot-2026-10-17/RESULTS.en.md) /
+[中文结果](experiments/qwen3-pilot-2026-10-17/RESULTS.zh-CN.md).
+本页保留 2.2 的历史验证记录；2.3 真实权重试跑已完成，结论与限制见上述链接。
+
 2026-10-16, Windows, Python 3.12.14, Inspect AI 0.3.281.
 
 - Local full suite: **60 tests passed**. 本地完整测试 60 项通过。
@@ -23,11 +28,11 @@
 The normalized examples contain synthetic data only. Native logs remain local.
 示例只含合成汇总；原生日志保留本地，不公开本机路径或未审查轨迹。
 
-Real-model smoke status: not run. The authorized server had available GPUs and
+Real-model smoke status at v2.2: not run. The authorized server had available GPUs and
 an existing inference runtime, but resolving the model download domain timed
 out. No model was downloaded or loaded. This records the incomplete step rather
 than claiming the full real-agent milestone is complete.
-真实模型试跑未完成：服务器有空闲 GPU 和已有推理环境，但下载域名解析超时；没有下载或加载
+2.2 当时的真实模型试跑未完成：服务器有空闲 GPU 和已有推理环境，但下载域名解析超时；没有下载或加载
 模型。本记录明确保留未完成步骤，不宣称真实 Agent 实验阶段已全部完成。
 
 Pre-merge review reproduced and fixed mock-provider mislabeling and loss of partial goal/usage evidence after native errors. Three added regressions include a native Inspect provider-failure run.

@@ -116,8 +116,8 @@ summaries. Never publish API keys or unreviewed private traces.
 
 ## Remaining milestones
 
-1. Real local-endpoint check and small-model validation of the implemented lab tasks.
-2. Budgeted adaptive red-team attacks; trial PyRIT in an isolated environment.
+1. Native-HF small-model validation is complete: [120-case pilot](experiments/qwen3-pilot-2026-10-17/RESULTS.en.md). Low utility requires a versioned clarification of task content/final-answer requirements and dev-only clean-task checks before interpreting attack comparisons. Preserve v1 scores; do not rescore them. HTTP endpoint validation remains pending.
+2. Freeze a capable target/configuration and new task version, then add budgeted adaptive red-team attacks; trial PyRIT in an isolated environment. First reuse existing attack strategies, with explicit turn/token/time budgets and retained transcripts; distinguish proposed, attempted, executed and successful attacks. A zero-attempt run cannot validate a defense.
 3. AgentDojo subset and frozen-set evaluation, with original benchmark results
    kept distinct from adaptations.
 4. REA owned-JavaScript evidence pilot and one MCP injection scenario.

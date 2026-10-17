@@ -11,11 +11,7 @@ from llm_audit.attacks.loader import AttackLoader
 from llm_audit.attacks.base import AttackPayload
 
 
-def test_inspect_ten_sample_pilot_without_network(tmp_path, monkeypatch):
-    monkeypatch.setenv("LOCALAPPDATA", str(tmp_path))
-    monkeypatch.setenv("WIN_PD_OVERRIDE_LOCAL_APPDATA", str(tmp_path))
-    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path))
-    monkeypatch.setenv("XDG_CACHE_HOME", str(tmp_path))
+def test_inspect_ten_sample_pilot_without_network(tmp_path, monkeypatch, inspect_runtime):
     monkeypatch.setenv("TIKTOKEN_CACHE_DIR", str(Path(__file__).parents[1] / ".cache/tiktoken"))
     path = Path(__file__).parents[1] / "attack_payloads" / "contract_demo.yaml"
     payloads = AttackLoader().load_from_yaml(path).get_payloads()
@@ -38,9 +34,9 @@ def test_inspect_ten_sample_pilot_without_network(tmp_path, monkeypatch):
 
 
 @pytest.mark.parametrize("reply,status", [("OK", "unknown"), ("DEMO_CANARY", "fail")])
-def test_inspect_truncated_conversation_is_not_pass(tmp_path, monkeypatch, reply, status):
-    monkeypatch.setenv("WIN_PD_OVERRIDE_LOCAL_APPDATA", str(tmp_path))
-    monkeypatch.setenv("XDG_DATA_HOME", str(tmp_path))
+def test_inspect_truncated_conversation_is_not_pass(
+    tmp_path, monkeypatch, reply, status, inspect_runtime
+):
     monkeypatch.setenv("TIKTOKEN_CACHE_DIR", str(Path(__file__).parents[1] / ".cache/tiktoken"))
     case = AttackPayload(
         "limited",

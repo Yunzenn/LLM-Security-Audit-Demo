@@ -1,5 +1,13 @@
 # Changelog / 更新记录
 
+## 2.3.0 — real-weight pilot / 真实权重试跑
+
+- Explicit pair selection, validated native-HF initialization options and forwarded HTTP chat-template settings. 显式选择任务对、校验原生 HF 参数、转发 HTTP 模板设置。
+- Portable source fingerprints and explicit completion evidence for Inspect's missing native-HF finish reason; capped/absent evidence stays unknown. 可跨源码与 wheel 核对的源码指纹；明确标注原生 HF 的推断完成证据，截断或缺失证据仍记未知。
+- 120 real-weight Qwen3-0.6B cases, 262 completed responses, zero execution errors, bilingual reviewed artifacts and separate dev/holdout summaries. 120 个真实权重用例、262 次已完成回复、零执行错误，公开双语复核结果与分区汇总。
+- Exact utility is only 5–20%, with no unauthorized attempts; zero achieved attack goals is not evidence of defense efficacy. 精确任务完成率仅 5%–20%，无越权尝试，不能宣称防御有效。
+- 80 local tests passed; Ruff and wheel build passed. Native HF validated; shared vLLM startup crashed and HTTP serving remains unvalidated. 本地 80 项测试、Ruff、wheel 构建通过；原生 HF 验证完成，共享 vLLM 启动崩溃，HTTP 服务仍待验证。
+
 ## 2.2.0 — lab-agent regression matrix / 资料助手回归实验
 
 - Review fixes: label all mock providers accurately and retain observed attack goals and usage after errors. 审查修复：准确标注模拟提供商，报错后保留已观察到的攻击目标和用量。
@@ -26,6 +34,8 @@
 - A leak observed before a later blank response remains a failure. Model
   initialization failures exit nonzero. 已观察到的泄漏不会被后续空回复覆盖；初始化失败返回错误码。
 
-These are execution/scoring tests, not real-model security results. Red/blue
-agents, AgentDojo, PyRIT and REA remain roadmap items.
-上述验证针对执行和评分逻辑，不代表真实模型安全效果；红蓝队、AgentDojo、PyRIT、REA 尚待集成。
+The 2.1/2.2 validations above are execution/scoring tests; the 2.3 pilot is
+reported separately with its limitations. Autonomous red/blue agents,
+AgentDojo, PyRIT and REA remain roadmap items.
+上述 2.1/2.2 验证针对执行和评分逻辑；2.3 真实试跑单独披露结果与限制。
+自主红蓝队、AgentDojo、PyRIT、REA 尚待集成。

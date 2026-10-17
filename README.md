@@ -1,98 +1,88 @@
-# LLM Security Audit — 2.2
+# LLM Security Audit
 
-[English](#english) · [中文](#中文)
+**A Python toolkit for reproducible security regression testing of LLM applications.**
 
-## English
+[中文说明](README.zh-CN.md) · [Upgrade plan](docs/UPGRADE_PLAN.en.md) · [Changelog](CHANGELOG.md)
 
-A security regression evaluation prototype for LLM applications. This iteration
-makes outcomes explicit and adds a small optional Inspect AI integration.
-It is not a security certification or a calibrated benchmark.
+LLM Security Audit runs configurable prompt attack cases against a model endpoint and records explicit evaluation outcomes. Its optional [Inspect AI](https://inspect.aisi.org.uk/) integration also runs paired, tool-using lab-assistant tasks with isolated in-memory state. The project focuses on repeatable experiments, observable tool effects and honest reporting of failures and unknowns.
 
-### What works now
+> **Evaluation prototype:** This project is not a security certification, a production guardrail, or a calibrated benchmark. Results depend on the selected model, prompts, task set and scoring contracts. Review the [evaluation limitations](#evaluation-status) before interpreting a score.
 
-- Exact, case-sensitive forbidden-output contracts across every assistant turn.
-- Separate `pass`, `fail`, `unknown`, and execution `error` outcomes. Keyword
-  heuristics remain advisory; legacy YAML without contracts scores unknown.
-- Isolated multi-turn histories, bounded concurrency (1–64 case workers), and
-  retries that restart the entire conversation.
-- English/Chinese Markdown and escaped offline HTML reports with coverage and
-  explicit denominators; raw JSON includes messages and attempts.
-- Optional Inspect AI backend with native logs and ten bilingual synthetic
-  fixtures. Mock results validate execution/scoring, not model safety.
+## Capabilities
 
-### Quick start
+| Area | Available now |
+| --- | --- |
+| Regression cases | Bundled YAML cases for prompt injection, jailbreaks, information leakage, encoding bypass, multilingual inputs, multi-turn attacks and exact-output contracts; custom YAML cases are supported. |
+| Endpoint scans | Run selected cases against a configured OpenAI-compatible chat-completions endpoint, with bounded concurrency, retries and Markdown/HTML reports. |
+| Outcome semantics | Distinguish pass, fail, unknown and execution error. Exact contracts are deterministic; heuristic findings are advisory. Missing contracts do not count as safe. |
+| Inspect integration | Optional native Inspect tasks and logs for attack-case scans and paired lab-assistant evaluations. |
+| Lab evaluation | Compare baseline, prompt-only and enforced tool policies in isolated synthetic environments. Score task utility and security outcomes separately. |
+| Reproducibility | Record selected pairs, dataset and source fingerprints, provider settings, model revision, per-case state and resource usage. |
 
-Python >=3.10 for core; the Inspect pilot is validated on Python 3.12.
+## Quick start
+
+Python 3.10 or later is supported for the core CLI. Install the optional Inspect integration only if you need its native tasks and logs.
+
+```bash
+python -m venv .venv
+# Activate the environment, then install:
+pip install -e '.[dev,inspect]'
+
+llm-audit --version
+llm-audit list-attacks
+llm-audit init --output config.yaml
+```
+
+Edit `config.yaml` for your locally available or otherwise authorized OpenAI-compatible endpoint, model name and credentials. Keep credentials out of source control. Then run a small scan:
+
+```bash
+llm-audit scan --config config.yaml --quick --lang en
+```
+
+Reports are written to the configured output directory. The bundled default endpoint is a local Ollama-style address; it is only a configuration example. The scan sends selected prompts to the endpoint you configure, so choose data and endpoints accordingly.
+
+### Offline synthetic lab run
+
+The default lab model is a scripted mock. It makes no model API calls and is useful for checking task execution, in-memory tool effects and policy enforcement. It does not measure a real model's safety.
+
+```bash
+llm-audit lab-eval --split dev --output reports/lab-dev
+# Full synthetic regression matrix: 20 task pairs × 2 variants × 3 defenses.
+llm-audit lab-eval --split all --output reports/lab-all
+```
+
+See the [lab experiment guide](docs/LAB_EXPERIMENT.en.md) for task design, scoring and output details.
+
+## Real-model pilot
+
+The first fixed Qwen3-0.6B native-Hugging-Face run completed 120 cases on one RTX 3090. It had zero execution errors and 262 completed model responses. Exact task utility ranged from **5% to 20%** across defense/variant groups. No unauthorized action was attempted or executed, so the zero attack-goal count does **not** show that any defense worked. The low utility also limits interpretation of the attack comparison.
+
+The run is a single greedy-decoding pilot on a small, public, template-related task set. It is not a robustness estimate or an AgentDojo result. Failure analysis found both exact-format mismatches and real task failures, including a claimed message send with no corresponding simulated outbox entry. The frozen scorer was not changed after the run.
+
+- [Results and failure analysis](docs/experiments/qwen3-pilot-2026-10-17/RESULTS.en.md)
+- [Reproduction guide](docs/REAL_MODEL_GUIDE.en.md)
+- [Frozen protocol and provenance](docs/experiments/qwen3-pilot-2026-10-17/PROTOCOL.md)
+
+Native Hugging Face inference succeeded in a project-isolated runtime. The existing shared vLLM runtime failed its startup checks and was left untouched; HTTP serving is not validated by this pilot. The report publishes reviewed synthetic records and hashes while keeping raw native logs private.
+
+## Evaluation status
+
+Implemented: YAML prompt-attack scans, deterministic output contracts, optional Inspect execution, synthetic paired lab tasks and a first real-weight execution pilot.
+
+Still planned: versioned task-contract improvements, clean-task competence checks, budgeted adaptive red-team attacks, a native AgentDojo baseline, PyRIT strategy reuse and a focused REA/MCP analysis. These have not been integrated or validated yet.
+
+Start with the [bilingual upgrade plan](docs/UPGRADE_PLAN.en.md). The [migration and scoring guide](docs/MIGRATION.en.md) describes how unknown results and exact contracts are handled.
+
+## Development
 
 ```bash
 pip install -e '.[dev,inspect]'
-llm-audit init
-# Edit config.yaml to point to your running OpenAI-compatible model service.
-llm-audit scan --categories contract_demo --lang en
-llm-audit scan --categories contract_demo --lang zh
-# Synthetic execution, no real model or paid API:
-llm-audit inspect-scan --dataset attack_payloads/contract_demo.yaml --model mockllm/model
+ruff check src tests
 pytest -q
 ```
 
-Inspect's first run may fetch public tokenizer files. See the migration guide
-for cache preparation and real endpoint settings. Inspect is optional: install
-`.[dev]` for core only. Use `llm-audit list-attacks` to inspect bundled cases.
+The GitHub Actions workflow checks the core package on Python 3.10 and 3.12, builds a wheel and runs the Inspect integration job. See [contributing and validation notes](docs/VALIDATION.md).
 
-### Roadmap
+## License
 
-Reuse Inspect for execution, then add paired benign/injection lab-assistant
-scenarios, red/blue defense comparisons, a separate PyRIT adapter, and native
-AgentDojo baselines. REA is an optional later analysis/MCP target; it is not an
-integrated vulnerability scanner. These integrations remain planned.
-
-- [Upgrade plan](docs/UPGRADE_PLAN.en.md)
-- [Migration and scoring semantics](docs/MIGRATION.en.md)
-- [Changes / 更新记录](CHANGELOG.md)
-
-## 中文
-
-面向大模型应用的安全回归评测原型。本轮先让执行和判分可信，再接入可选
-Inspect AI 后端。当前版本不能提供安全认证，也不是经过校准的安全基准。
-
-### 已实现
-
-- 逐轮检查助手输出中的精确、区分大小写的禁止字符串。
-- 明确区分通过、失败、未知、执行错误。关键词规则只作辅助信号；没有判分契约的旧用例记为未知。
-- 用例间对话隔离，支持真实多轮、有界并发和整段对话重试。
-- 中英文 Markdown 与转义后的离线 HTML 报告，展示可评分覆盖率及明确分母；原始 JSON 保存对话和尝试次数。
-- 可选 Inspect AI 执行后端、原生轨迹及十条双语合成用例。Mock 仅验证执行与评分逻辑，不代表模型安全效果。
-
-### 使用
-
-核心要求 Python >=3.10，Inspect 试点在 Python 3.12 验证。安装命令见上方。
-`scan` 需要先配置并启动模型服务；`inspect-scan --model mockllm/model` 使用合成输出，
-不调用真实模型或付费 API。首次 Inspect 运行可能下载公开分词器数据，离线准备步骤见迁移说明。
-
-### 后续路线
-
-以 Inspect 复用执行与日志；下一阶段加入资料助手的正常任务和注入配对样本，比较不同防御策略。
-之后才接入 PyRIT 红队策略、AgentDojo 原生基准，以及可选 REA 分析/MCP 场景。
-这些尚未实现，不能提前写成集成成果。
-
-- [中文升级方案](docs/UPGRADE_PLAN.zh-CN.md)
-- [中文迁移与判分说明](docs/MIGRATION.zh-CN.md)
-- [Changes / 更新记录](CHANGELOG.md)
-
-## Lab-assistant iteration / 资料助手实验
-
-```bash
-# 20 pairs × 2 variants × 3 defenses = 120 simulated cases
-llm-audit lab-eval --split all --output reports/lab-v1
-```
-
-The default is a deliberately policy-blind scripted mock, with no paid API.
-It verifies in-memory tool effects and enforcement, not model defense efficacy.
-默认使用故意忽略防御提示的模拟模型，不调用付费 API；验证的是内存工具状态与权限拦截。
-
-[English guide](docs/LAB_EXPERIMENT.en.md) · [中文说明](docs/LAB_EXPERIMENT.zh-CN.md)
-
-## License / 许可
-
-[MIT](LICENSE). Third-party frameworks retain their own licenses.
-第三方框架遵循各自许可证。
+[MIT](LICENSE). Third-party projects retain their own licenses.
