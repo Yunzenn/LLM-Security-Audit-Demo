@@ -213,10 +213,16 @@ def inspect_scan(dataset: str, model: str, base_url: Optional[str], output: str)
 
 @main.command("lab-eval")
 @click.option("--model", default="mockllm/lab", show_default=True)
+@click.option(
+    "--dataset", default=None, type=click.Path(exists=True, dir_okay=False, path_type=Path)
+)
 @click.option("--base-url", default=None)
 @click.option("--model-revision", default="unverified")
 @click.option(
     "--defense", type=click.Choice(["all", "baseline", "prompt", "enforced"]), default="all"
+)
+@click.option(
+    "--variant", type=click.Choice(["all", "clean", "attack"]), default="all", show_default=True
 )
 @click.option("--split", type=click.Choice(["all", "dev", "holdout"]), default="dev")
 @click.option("--pairs", default=None, help="Explicit comma-separated pair IDs / 指定任务对编号")
@@ -230,9 +236,11 @@ def inspect_scan(dataset: str, model: str, base_url: Optional[str], output: str)
 @click.option("--output", default="reports/lab", type=click.Path())
 def lab_eval(
     model,
+    dataset,
     base_url,
     model_revision,
     defense,
+    variant,
     split,
     pairs,
     chat_template_kwargs,
@@ -301,12 +309,13 @@ def lab_eval(
         raise click.ClickException(
             "Output directory must be empty / 输出目录必须为空，避免覆盖实验"
         )
-    cases, digest = load_cases()
+    cases, digest = load_cases(dataset)
     try:
         selected = select_cases(cases, split, pairs, limit)
     except ValueError as error:
         raise click.BadParameter(str(error), param_hint="--pairs/--split/--limit") from None
     defenses = DEFENSES if defense == "all" else (defense,)
+    variants = ("clean", "attack") if variant == "all" else (variant,)
     is_mock = model == "mockllm/lab"
     selected_model = (
         scripted_lab_model()
@@ -317,6 +326,7 @@ def lab_eval(
         build_lab_task(
             selected,
             defenses,
+            variants=variants,
             chat_template_kwargs=template_options,
             provider=model.split("/", 1)[0],
         ),
@@ -345,10 +355,10 @@ def lab_eval(
             row["input_tokens"] = sum(usage.input_tokens for usage in sample.model_usage.values())
             row["output_tokens"] = sum(usage.output_tokens for usage in sample.model_usage.values())
             rows.append(row)
-    expected = len(selected) * 2 * len(defenses)
+    expected = len(selected) * len(variants) * len(defenses)
     present = {(row["pair_id"], row["variant"], row["defense"]) for row in rows}
     for case in selected:
-        for variant in ("clean", "attack"):
+        for variant in variants:
             for mode in defenses:
                 if (case.id, variant, mode) not in present:
                     rows.append(
@@ -360,7 +370,7 @@ def lab_eval(
                         }
                     )
     manifest = {
-        "experiment": "lab-v1",
+        "experiment": "lab-v2-dev" if dataset and dataset.name == "lab_v2_dev.json" else "lab-v1",
         "execution": "scripted_mock"
         if is_mock
         else ("provider_mock" if model.startswith("mockllm/") else "real_model"),
@@ -369,6 +379,7 @@ def lab_eval(
         "model": model,
         "model_revision": "scripted-v1" if is_mock else model_revision,
         "dataset_sha256": digest,
+        "dataset_id": dataset.name if dataset else "lab_v1.json",
         "source_sha256": source_fingerprint(),
         "source_hash_scheme": "relative-path-and-lf-python-v1",
         "pair_ids": [case.id for case in selected],
@@ -378,6 +389,7 @@ def lab_eval(
         "pair_count": len(selected),
         "expected_cases": expected,
         "defenses": list(defenses),
+        "variants": list(variants),
         "policy_version": POLICY_VERSION,
         "scorer_version": SCORER_VERSION,
         "inspect_ai": version("inspect_ai"),

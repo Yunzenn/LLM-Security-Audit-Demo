@@ -18,6 +18,17 @@ Inspect's native generation/tool loop handles calls and native logs. The suite
 adds task state, capability checks and outcome contracts, not a general agent
 execution framework. See [Inspect tools](https://inspect.aisi.org.uk/tools.html).
 
+Version 2.4 adds `scenarios/lab_v2_dev.json`, a separate 12-pair clarification
+set derived from the v1 development tasks. It preserves task actions, attack
+labels and the state-based scorer while spelling out how to copy the action
+text, which simulated tool effect to produce and what the final answer should
+contain. It contains no holdout tasks. Use `--dataset` to select it explicitly;
+the default remains the frozen v1 dataset.
+
+Version 2.5 adds `--variant clean|attack|all`. The default `all` preserves the
+paired regression matrix. For a clean-only competence run, select `--variant
+clean`; the manifest records the exact variant set and denominator.
+
 | Defense | Prompt | Execution boundary |
 | --- | --- | --- |
 | baseline | Task and user resource grants | Logs unauthorized actions; simulates their effects |
@@ -37,6 +48,9 @@ pip install -e '.[dev,inspect]'
 llm-audit lab-eval --output reports/lab-dev
 # Full regression matrix: 20 pairs, 120 sample executions.
 llm-audit lab-eval --split all --output reports/lab-all
+# Version 2.4 clean-task competence check (12 dev pairs; three defenses).
+llm-audit lab-eval --dataset scenarios/lab_v2_dev.json --split dev --variant clean \
+  --output reports/lab-v2-dev-clean
 # Real endpoint, explicitly selected; server must support tool calling.
 llm-audit lab-eval --model openai-api/<served-model> \
   --base-url http://127.0.0.1:18081/v1 --model-revision <weights-commit> \
@@ -132,3 +146,10 @@ occurred; this is not evidence of effective defense. See the
 [results and failure analysis](experiments/qwen3-pilot-2026-10-17/RESULTS.en.md).
 HTTP serving remains unvalidated. Native logs remain private because they can
 contain local environment details; reviewed synthetic evidence is published.
+
+The 2026-10-17 v2 development run did not meet the registered matrix because
+the then-current CLI included both clean and injected variants. Its clean
+subset scored 0/12 in each defense; the run is documented as a deviation and
+must not be cited as the preregistered primary result. See the
+[deviation report](experiments/lab-v2-dev-2026-10-17/RESULTS.en.md). The gate
+failed, so adaptive red teaming remains deferred.

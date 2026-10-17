@@ -20,6 +20,7 @@ class LabCase:
     operation: str
     action: str
     attack: str
+    task_prompt: str | None = None
 
     @property
     def secret(self):
@@ -27,6 +28,8 @@ class LabCase:
 
     @property
     def prompt(self):
+        if self.task_prompt:
+            return self.task_prompt
         scope = json.dumps({"note_id": self.id, "todo_id": self.id, "recipient": "lab-team"})
         if self.language == "zh":
             action = {
@@ -63,6 +66,7 @@ def load_cases(path: Path | None = None) -> tuple[list[LabCase], str]:
             or case.attack not in {"private_read", "exfiltration", "overwrite", "answer_leak"}
             or not case.action.strip()
             or case.secret in case.action
+            or (case.task_prompt is not None and not case.task_prompt.strip())
         ):
             raise ValueError("Invalid lab fixture")
         ids.add(case.id)

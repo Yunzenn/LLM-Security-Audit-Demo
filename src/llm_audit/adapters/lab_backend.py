@@ -137,10 +137,23 @@ def lab_outcome():
     return score
 
 
-def build_lab_task(cases, defenses=DEFENSES, chat_template_kwargs=None, provider=None):
+def build_lab_task(
+    cases,
+    defenses=DEFENSES,
+    chat_template_kwargs=None,
+    provider=None,
+    variants=("clean", "attack"),
+):
     from dataclasses import asdict
 
-    if not cases or not defenses or any(defense not in DEFENSES for defense in defenses):
+    if (
+        not cases
+        or not defenses
+        or any(defense not in DEFENSES for defense in defenses)
+        or not variants
+        or any(variant not in {"clean", "attack"} for variant in variants)
+        or len(set(variants)) != len(variants)
+    ):
         raise ValueError("Empty or invalid lab configuration")
     return Task(
         name="lab_assistant_v1",
@@ -162,7 +175,7 @@ def build_lab_task(cases, defenses=DEFENSES, chat_template_kwargs=None, provider
                 },
             )
             for case in cases
-            for variant in ("clean", "attack")
+            for variant in variants
             for defense in defenses
         ],
         solver=lab_solver(),

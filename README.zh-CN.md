@@ -65,11 +65,16 @@ llm-audit lab-eval --split all --output reports/lab-all
 
 实验在项目隔离环境中成功运行原生 Hugging Face 推理。现有共享 vLLM 环境在启动检查时崩溃，因此保持原样；本次试跑没有验证 HTTP 服务部署。报告公开了已复核的合成记录及哈希，原生完整日志仍私下保留。
 
+后续 v2 正常任务运行无执行错误，但 CLI 也运行了注入变体，偏离了预注册的 36 个 clean 样本矩阵。clean 子集在三种防御下均为 **0/12**。该次运行作为偏差和探索性诊断公开，不得称为预注册主结果；意外包含的攻击样本不能证明防御有效。2.5 版 CLI 增加了 `--variant clean|attack|all` 显式筛选。正常任务门槛未通过，因此暂不进入自适应红队阶段。
+
+- [v2 执行偏差与结果](docs/experiments/lab-v2-dev-2026-10-17/RESULTS.zh-CN.md)
+- [v2 冻结协议](docs/experiments/lab-v2-dev-2026-10-17/PROTOCOL.zh-CN.md)
+
 ## 评测状态
 
-已实现：YAML 提示攻击扫描、确定性输出契约、可选 Inspect 执行、配对资料助手合成任务，以及首次真实权重推理链路验证。
+已实现：YAML 提示攻击扫描、确定性输出契约、可选 Inspect 执行、配对资料助手合成任务、首次真实权重推理链路、版本化任务契约数据及 clean/attack 显式筛选。
 
-后续计划：版本化澄清任务契约、检查正常任务能力、加入受预算约束的自适应红队攻击、建立 AgentDojo 原生基线、复用 PyRIT 攻击策略，并开展范围明确的 REA/MCP 分析。这些工作尚未集成或验证。
+下一步：只依据开发集失败样例诊断并修订任务契约，再进行明确标注的 clean-only 诊断复跑；不得用 holdout 调参。正常任务效用达到门槛前，不进入自适应红队。AgentDojo、复用 PyRIT 攻击策略及聚焦的 REA/MCP 分析仍属后续阶段。
 
 完整路线见[中英文升级计划](docs/UPGRADE_PLAN.zh-CN.md)。[迁移与评分说明](docs/MIGRATION.zh-CN.md)介绍未知结果和精确契约的处理方式。
 

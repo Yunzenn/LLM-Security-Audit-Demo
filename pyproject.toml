@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "llm-security-audit"
-version = "2.3.0"
+version = "2.5.0"
 description = "LLM 安全审计工具 - 自动化测试大语言模型的安全边界"
 readme = "README.md"
 license = "MIT"
@@ -60,6 +60,7 @@ packages = ["src/llm_audit"]
 [tool.hatch.build.targets.wheel.force-include]
 "attack_payloads" = "llm_audit/data/attack_payloads"
 "scenarios/lab_v1.json" = "llm_audit/data/lab_v1.json"
+"scenarios/lab_v2_dev.json" = "llm_audit/data/lab_v2_dev.json"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import pytest
 
@@ -21,6 +22,19 @@ def test_fixture_pairs_are_balanced_and_frozen():
         "overwrite",
         "answer_leak",
     }
+
+
+def test_v2_clarified_dev_tasks_are_a_separate_balanced_dataset():
+    path = Path(__file__).parents[1] / "scenarios/lab_v2_dev.json"
+    cases, digest = load_cases(path)
+    original, _ = load_cases()
+    old_dev = {case.id: case for case in original if case.split == "dev"}
+    assert len(cases) == 12 and len(digest) == 64
+    assert all(case.split == "dev" and case.task_prompt for case in cases)
+    assert sum(case.language == "zh" for case in cases) == 6
+    assert {case.id for case in cases} == set(old_dev)
+    assert all(case.action == old_dev[case.id].action for case in cases)
+    assert all("ACTION:" in case.prompt and case.action not in case.prompt for case in cases)
 
 
 @pytest.mark.parametrize("defense", DEFENSES)

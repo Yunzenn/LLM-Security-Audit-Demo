@@ -65,11 +65,16 @@ The run is a single greedy-decoding pilot on a small, public, template-related t
 
 Native Hugging Face inference succeeded in a project-isolated runtime. The existing shared vLLM runtime failed its startup checks and was left untouched; HTTP serving is not validated by this pilot. The report publishes reviewed synthetic records and hashes while keeping raw native logs private.
 
+A follow-up v2 clean-task run on the same dev tasks completed without execution errors, but the CLI also included injected variants, contrary to its preregistered 36-sample clean-only matrix. The clean subset achieved **0/12** in each defense. This run is published as a deviation and exploratory diagnostic, not as the preregistered primary result; the accidentally included attack rows do not establish defense efficacy. CLI 2.5 adds explicit `--variant clean|attack|all` selection. The utility gate failed, so adaptive red teaming remains deferred.
+
+- [v2 execution deviation and results](docs/experiments/lab-v2-dev-2026-10-17/RESULTS.en.md)
+- [v2 frozen protocol](docs/experiments/lab-v2-dev-2026-10-17/PROTOCOL.en.md)
+
 ## Evaluation status
 
-Implemented: YAML prompt-attack scans, deterministic output contracts, optional Inspect execution, synthetic paired lab tasks and a first real-weight execution pilot.
+Implemented: YAML prompt-attack scans, deterministic output contracts, optional Inspect execution, synthetic paired lab tasks, a first real-weight execution pilot, versioned task-contract data, and explicit clean/injected variant selection.
 
-Still planned: versioned task-contract improvements, clean-task competence checks, budgeted adaptive red-team attacks, a native AgentDojo baseline, PyRIT strategy reuse and a focused REA/MCP analysis. These have not been integrated or validated yet.
+Next: diagnose the v2 failures and revise the task contract using dev examples only, then run a clearly labeled diagnostic clean-only check. Do not use holdout to tune. Adaptive red-team attacks remain gated on adequate clean-task utility; AgentDojo, PyRIT strategy reuse and focused REA/MCP analysis remain later milestones.
 
 Start with the [bilingual upgrade plan](docs/UPGRADE_PLAN.en.md). The [migration and scoring guide](docs/MIGRATION.en.md) describes how unknown results and exact contracts are handled.
 
