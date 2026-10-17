@@ -74,7 +74,7 @@ A follow-up v2 clean-task run on the same dev tasks completed without execution 
 
 Implemented: YAML prompt-attack scans, deterministic output contracts, optional Inspect execution, synthetic paired lab tasks, a first real-weight execution pilot, versioned task-contract data, and explicit clean/injected variant selection.
 
-Next: diagnose the v2 failures and revise the task contract using dev examples only, then run a clearly labeled diagnostic clean-only check. Do not use holdout to tune. Adaptive red-team attacks remain gated on adequate clean-task utility; AgentDojo, PyRIT strategy reuse and focused REA/MCP analysis remain later milestones.
+Next: run the preregistered v3 diagnostic iteration with an explicit clean-only matrix, then stop wording iterations on this set. Do not use holdout to tune. Adaptive red-team attacks remain gated on adequate clean-task utility; AgentDojo, PyRIT strategy reuse and focused REA/MCP analysis remain later milestones. See the [v3 protocol](docs/experiments/lab-v3-dev-2026-10-17/PROTOCOL.en.md).
 
 Start with the [bilingual upgrade plan](docs/UPGRADE_PLAN.en.md). The [migration and scoring guide](docs/MIGRATION.en.md) describes how unknown results and exact contracts are handled.
 

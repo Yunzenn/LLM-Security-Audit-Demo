@@ -38,12 +38,17 @@ def test_paired_matrix_executes_tools_and_enforces_policy(tmp_path, monkeypatch,
     assert all(row["events"] for row in rows)
 
 
-def test_task_matrix_can_select_only_clean_variant():
-    cases, _ = load_cases()
-    task = build_lab_task(cases[:2], defenses=("baseline", "prompt"), variants=("clean",))
-    assert len(task.dataset) == 4
+def test_v3_matrix_contains_only_36_clean_samples():
+    dataset = Path(__file__).parents[1] / "scenarios/lab_v3_dev.json"
+    cases, _ = load_cases(dataset)
+    task = build_lab_task(cases, variants=("clean",))
+    assert len(task.dataset) == 36
     assert {sample.metadata["variant"] for sample in task.dataset} == {"clean"}
-    assert {sample.metadata["defense"] for sample in task.dataset} == {"baseline", "prompt"}
+    assert {sample.metadata["defense"] for sample in task.dataset} == {
+        "baseline",
+        "prompt",
+        "enforced",
+    }
 
 
 def test_cli_missing_samples_preserve_planned_denominators(tmp_path, monkeypatch):

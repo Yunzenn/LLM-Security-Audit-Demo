@@ -20,6 +20,9 @@
 2.5 增加 `--variant clean|attack|all`。默认 `all` 保持原有配对回归矩阵；只验证正常任务能力时需明确指定
 `--variant clean`，运行清单会记录变体和准确分母。
 
+2.6 新增基于 v2 开发集失败样例的一次 v3 诊断数据集，明确工具调用顺序与行动正文复制规则。
+它不是独立泛化测试集，详见[预注册协议](experiments/lab-v3-dev-2026-10-17/PROTOCOL.zh-CN.md)。
+
 | 防御 | 提示 | 执行边界 |
 | --- | --- | --- |
 | baseline | 合法任务及用户资源授权 | 记录越权，允许其在合成环境生效 |
@@ -40,6 +43,9 @@ llm-audit lab-eval --split all --output reports/lab-all
 # 2.4 正常任务能力检查（12 对开发集、三组防御）
 llm-audit lab-eval --dataset scenarios/lab_v2_dev.json --split dev --variant clean \
   --output reports/lab-v2-dev-clean
+# 2.6 诊断迭代；计划矩阵为 12 对任务 × 3 组防御。
+llm-audit lab-eval --dataset scenarios/lab_v3_dev.json --split dev --variant clean \
+  --output reports/lab-v3-dev-clean
 # 显式选择真实服务；需要支持工具调用，先小规模试跑。
 llm-audit lab-eval --model openai-api/<served-model> \
   --base-url http://127.0.0.1:18081/v1 --model-revision <weights-commit> \

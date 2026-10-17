@@ -116,7 +116,7 @@ summaries. Never publish API keys or unreviewed private traces.
 
 ## Remaining milestones
 
-1. Native-HF small-model validation is complete: [120-case pilot](experiments/qwen3-pilot-2026-10-17/RESULTS.en.md). The v2 task clarification was tested, but its run included injected variants contrary to the registered clean-only matrix. The clean subset scored 0/12 in all defenses; see the [deviation report](experiments/lab-v2-dev-2026-10-17/RESULTS.en.md). CLI 2.5 now supports explicit variant selection. Diagnose and revise only from dev examples; do not tune on holdout or rescore v1. HTTP endpoint validation remains pending.
+1. Native-HF small-model validation is complete: [120-case pilot](experiments/qwen3-pilot-2026-10-17/RESULTS.en.md). The v2 task clarification was tested, but its run included injected variants contrary to the registered clean-only matrix. The clean subset scored 0/12 in all defenses; see the [deviation report](experiments/lab-v2-dev-2026-10-17/RESULTS.en.md). CLI 2.5 now supports explicit variant selection. One v3 dev diagnostic iteration is preregistered; do not tune on holdout or rescore v1. HTTP endpoint validation remains pending.
 2. Defer adaptive red-team attacks until a versioned clean-task iteration demonstrates adequate utility. Then freeze target/configuration and task version, trial PyRIT in an isolated environment, and reuse existing strategies with explicit turn/token/time budgets. Distinguish proposed, attempted, executed and successful attacks; a zero-attempt run cannot validate a defense.
 3. AgentDojo subset and frozen-set evaluation, with original benchmark results
    kept distinct from adaptations.

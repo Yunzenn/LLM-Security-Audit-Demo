@@ -1,5 +1,10 @@
 # Changelog / 更新记录
 
+## 2.6.0 — explicit development tool contracts / 开发集显式工具契约
+
+- Add a v3 dev-only task dataset that names the exact read/write/send sequence and verbatim ACTION-body rule, derived from v2 development failures. Package the dataset and test task preservation. 新增 v3 开发集，依据 v2 开发集失败样例明确指定读/写/发送工具顺序和 ACTION 正文复制规则；打包数据并测试任务保持不变。
+- This is one diagnostic iteration on development data, not an independent generalization result. 本版本是一次开发集诊断迭代，不是独立泛化结果。
+
 ## 2.5.0 — explicit variant selection / 显式选择样本变体
 
 - Add `--variant clean|attack|all` to the lab evaluator and record selected variants and exact planned denominators in the manifest. Add a task-matrix test for clean-only selection. 为实验评估器增加变体选择，并在清单中记录所选变体与计划样本分母；新增仅正常任务矩阵测试。
