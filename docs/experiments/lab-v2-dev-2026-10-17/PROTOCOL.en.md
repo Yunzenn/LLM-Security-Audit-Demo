@@ -24,3 +24,9 @@ If the gate fails, publish the failure and inspect only these development exampl
 ## Reporting
 
 Report all 36 planned samples, completion counts, execution errors, incomplete evidence, dataset and source hashes, model revision, runtime versions, and hardware. Preserve native traces privately; publish only reviewed synthetic evidence with local paths and machine-specific details removed.
+
+## Execution deviation and observed development result
+
+The first run did not honor the clean-only matrix: the CLI had no variant selector and expanded all 12 pairs into both clean and attack variants, producing 72 planned samples. This run is not a conforming execution of the preregistered protocol. Its clean subset is retained as exploratory diagnostic evidence only: 0/12 utility successes in each defense, 0 errors, and 12/12 scorable per defense. Across those 36 clean samples, eight task pairs produced no tool events; the remaining four were message tasks whose simulated outbox content did not meet the exact task contract. The accidentally included attack subset is not used as defense-efficacy evidence; no unauthorized attempts or attack-goal completions were recorded. No holdout data was accessed.
+
+Because these outcomes have been observed, any later clean-only run is a diagnostic replication, not a fresh preregistered primary result. Version 2.5 adds explicit variant selection so later runs can match their declared matrix.

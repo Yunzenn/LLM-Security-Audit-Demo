@@ -221,6 +221,9 @@ def inspect_scan(dataset: str, model: str, base_url: Optional[str], output: str)
 @click.option(
     "--defense", type=click.Choice(["all", "baseline", "prompt", "enforced"]), default="all"
 )
+@click.option(
+    "--variant", type=click.Choice(["all", "clean", "attack"]), default="all", show_default=True
+)
 @click.option("--split", type=click.Choice(["all", "dev", "holdout"]), default="dev")
 @click.option("--pairs", default=None, help="Explicit comma-separated pair IDs / 指定任务对编号")
 @click.option("--hf-options", default=None, help="Native HF settings JSON / 原生 HF 设置")
@@ -237,6 +240,7 @@ def lab_eval(
     base_url,
     model_revision,
     defense,
+    variant,
     split,
     pairs,
     chat_template_kwargs,
@@ -311,6 +315,7 @@ def lab_eval(
     except ValueError as error:
         raise click.BadParameter(str(error), param_hint="--pairs/--split/--limit") from None
     defenses = DEFENSES if defense == "all" else (defense,)
+    variants = ("clean", "attack") if variant == "all" else (variant,)
     is_mock = model == "mockllm/lab"
     selected_model = (
         scripted_lab_model()
@@ -321,6 +326,7 @@ def lab_eval(
         build_lab_task(
             selected,
             defenses,
+            variants=variants,
             chat_template_kwargs=template_options,
             provider=model.split("/", 1)[0],
         ),
@@ -349,10 +355,10 @@ def lab_eval(
             row["input_tokens"] = sum(usage.input_tokens for usage in sample.model_usage.values())
             row["output_tokens"] = sum(usage.output_tokens for usage in sample.model_usage.values())
             rows.append(row)
-    expected = len(selected) * 2 * len(defenses)
+    expected = len(selected) * len(variants) * len(defenses)
     present = {(row["pair_id"], row["variant"], row["defense"]) for row in rows}
     for case in selected:
-        for variant in ("clean", "attack"):
+        for variant in variants:
             for mode in defenses:
                 if (case.id, variant, mode) not in present:
                     rows.append(
@@ -383,6 +389,7 @@ def lab_eval(
         "pair_count": len(selected),
         "expected_cases": expected,
         "defenses": list(defenses),
+        "variants": list(variants),
         "policy_version": POLICY_VERSION,
         "scorer_version": SCORER_VERSION,
         "inspect_ai": version("inspect_ai"),

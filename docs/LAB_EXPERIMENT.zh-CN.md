@@ -17,6 +17,9 @@
 应产生哪种模拟工具状态，以及最终回复的格式。它保留原任务动作、攻击标签和状态评分器，不含 holdout。
 通过 `--dataset` 显式选择；默认数据仍为冻结的 v1。
 
+2.5 增加 `--variant clean|attack|all`。默认 `all` 保持原有配对回归矩阵；只验证正常任务能力时需明确指定
+`--variant clean`，运行清单会记录变体和准确分母。
+
 | 防御 | 提示 | 执行边界 |
 | --- | --- | --- |
 | baseline | 合法任务及用户资源授权 | 记录越权，允许其在合成环境生效 |
@@ -35,7 +38,7 @@ llm-audit lab-eval --output reports/lab-dev
 # 20 对 × 正常/注入 × 三种防御 = 120 个用例。
 llm-audit lab-eval --split all --output reports/lab-all
 # 2.4 正常任务能力检查（12 对开发集、三组防御）
-llm-audit lab-eval --dataset scenarios/lab_v2_dev.json --split dev \
+llm-audit lab-eval --dataset scenarios/lab_v2_dev.json --split dev --variant clean \
   --output reports/lab-v2-dev-clean
 # 显式选择真实服务；需要支持工具调用，先小规模试跑。
 llm-audit lab-eval --model openai-api/<served-model> \
@@ -99,3 +102,7 @@ CI 覆盖完整 120 个模拟用例，包括真实工具请求、状态变化与
 [真实模型指南](REAL_MODEL_GUIDE.zh-CN.md)及
 [结果与失败分析](experiments/qwen3-pilot-2026-10-17/RESULTS.zh-CN.md)。
 HTTP 部署仍待验证。原生日志含环境信息，私下保留，只公开已复核的合成证据。
+
+2026-10-17 的 v2 开发集运行没有遵守登记矩阵：当时的 CLI 同时运行了 clean 与注入变体。
+clean 子集在三种防御下均为 0/12；该次运行已作为偏差记录，不得称为预注册主结果。详见
+[执行偏差报告](experiments/lab-v2-dev-2026-10-17/RESULTS.zh-CN.md)。能力门槛未通过，因此暂不进入自适应红队阶段。
