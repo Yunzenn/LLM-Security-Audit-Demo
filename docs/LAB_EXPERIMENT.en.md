@@ -161,3 +161,8 @@ subset scored 0/12 in each defense; the run is documented as a deviation and
 must not be cited as the preregistered primary result. See the
 [deviation report](experiments/lab-v2-dev-2026-10-17/RESULTS.en.md). The gate
 failed, so adaptive red teaming remains deferred.
+
+The v3 dev diagnostic subsequently matched its clean-only matrix but still
+scored 0/12 in every defense. Stop task-wording iterations on this set with
+Qwen3-0.6B; see the [v3 results](experiments/lab-v3-dev-2026-10-17/RESULTS.en.md).
+A stronger model requires a separate, predeclared dev-only capability check.

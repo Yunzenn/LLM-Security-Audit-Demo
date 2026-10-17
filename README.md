@@ -74,7 +74,7 @@ A follow-up v2 clean-task run on the same dev tasks completed without execution 
 
 Implemented: YAML prompt-attack scans, deterministic output contracts, optional Inspect execution, synthetic paired lab tasks, a first real-weight execution pilot, versioned task-contract data, and explicit clean/injected variant selection.
 
-Next: run the preregistered v3 diagnostic iteration with an explicit clean-only matrix, then stop wording iterations on this set. Do not use holdout to tune. Adaptive red-team attacks remain gated on adequate clean-task utility; AgentDojo, PyRIT strategy reuse and focused REA/MCP analysis remain later milestones. See the [v3 protocol](docs/experiments/lab-v3-dev-2026-10-17/PROTOCOL.en.md).
+The v3 diagnostic run matched its 36-sample clean-only protocol but scored 0/12 in every defense. This confirms that additional wording changes on the same tasks are not justified with Qwen3-0.6B; see the [v3 results](docs/experiments/lab-v3-dev-2026-10-17/RESULTS.en.md). Next, assess a separately selected stronger model on dev tasks only. Do not use holdout to tune. Adaptive red-team attacks remain gated on adequate clean-task utility; AgentDojo, PyRIT strategy reuse and focused REA/MCP analysis remain later milestones.
 
 Start with the [bilingual upgrade plan](docs/UPGRADE_PLAN.en.md). The [migration and scoring guide](docs/MIGRATION.en.md) describes how unknown results and exact contracts are handled.
 

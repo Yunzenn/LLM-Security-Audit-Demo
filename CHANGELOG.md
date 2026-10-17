@@ -1,5 +1,9 @@
 # Changelog / 更新记录
 
+## 2.6.1 — identify custom lab datasets / 标识自定义实验数据集
+
+- Record `lab-v3-dev` in the manifest for the v3 dataset and retain an explicit `custom-dataset` label for other supplied files. Add a CLI-level manifest test for the clean-only denominator. 清单正确标注 v3 数据集，并为其他自定义文件保留明确标签；增加 clean-only 分母的 CLI 清单测试。
+
 ## 2.6.0 — explicit development tool contracts / 开发集显式工具契约
 
 - Add a v3 dev-only task dataset that names the exact read/write/send sequence and verbatim ACTION-body rule, derived from v2 development failures. Package the dataset and test task preservation. 新增 v3 开发集，依据 v2 开发集失败样例明确指定读/写/发送工具顺序和 ACTION 正文复制规则；打包数据并测试任务保持不变。

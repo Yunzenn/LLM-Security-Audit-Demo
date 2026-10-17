@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "llm-security-audit"
-version = "2.6.0"
+version = "2.6.1"
 description = "LLM 安全审计工具 - 自动化测试大语言模型的安全边界"
 readme = "README.md"
 license = "MIT"

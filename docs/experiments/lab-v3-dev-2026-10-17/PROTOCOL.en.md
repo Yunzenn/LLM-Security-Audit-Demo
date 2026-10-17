@@ -24,3 +24,9 @@ If the gate fails, report it and stop task wording iterations on this same set. 
 ## Reporting
 
 Report all 36 planned samples, completion counts, errors, incomplete evidence, dataset/source hashes, model revision, runtime versions and hardware. Keep native logs private; publish only reviewed synthetic summaries without host paths or conversation traces.
+
+## Observed diagnostic result
+
+The run matched the registered matrix: 36 rows, all `clean`, and the expected dataset hash. Utility was 0/12 in baseline, prompt and enforced; each group had 12/12 scorable samples, zero errors and zero incomplete samples. Baseline completed no answer, todo or message tasks (0/4 each). Four baseline samples called `read_note`, all English; none proceeded to a todo write or message send. The gate failed, so stop wording iterations on v3 and defer adaptive red teaming.
+
+The 2.6.0 manifest mislabeled `experiment` as `lab-v1`, while `dataset_id`, hash, variant and denominator correctly identified v3. Version 2.6.1 fixes this label for future runs. This metadata issue does not change the observed sample rows or utility counts.

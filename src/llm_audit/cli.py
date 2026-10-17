@@ -369,8 +369,14 @@ def lab_eval(
                             "error": "Missing native sample; run incomplete",
                         }
                     )
+    dataset_id = dataset.name if dataset else "lab_v1.json"
+    experiment_id = {
+        "lab_v1.json": "lab-v1",
+        "lab_v2_dev.json": "lab-v2-dev",
+        "lab_v3_dev.json": "lab-v3-dev",
+    }.get(dataset_id, "custom-dataset")
     manifest = {
-        "experiment": "lab-v2-dev" if dataset and dataset.name == "lab_v2_dev.json" else "lab-v1",
+        "experiment": experiment_id,
         "execution": "scripted_mock"
         if is_mock
         else ("provider_mock" if model.startswith("mockllm/") else "real_model"),
@@ -379,7 +385,7 @@ def lab_eval(
         "model": model,
         "model_revision": "scripted-v1" if is_mock else model_revision,
         "dataset_sha256": digest,
-        "dataset_id": dataset.name if dataset else "lab_v1.json",
+        "dataset_id": dataset_id,
         "source_sha256": source_fingerprint(),
         "source_hash_scheme": "relative-path-and-lf-python-v1",
         "pair_ids": [case.id for case in selected],
